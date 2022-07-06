@@ -5,7 +5,7 @@ master:
   variables:
     image-tag:
       type: string
-      value: latest
+      value: <- $image_tag
     rpc-port:
       type: int
       value: 3306
@@ -43,7 +43,7 @@ slave:
   variables:
     image-tag:
       type: string
-      value: latest
+      value: <- $image_tag
     rpc-port:
       type: int
       value: 3307
@@ -67,7 +67,7 @@ slave:
       type: string
       value: mysql-slave-data
   containers:
-    mysql-master:
+    mysql-slave:
       paths:
         - <- `${monk-volume-path}/${mysql_slave_data}:/var/lib/mysql`
         - /Users/burakhan/www/monkd/monk-mysql/mysql-master-slave/config/slave.cnf:/etc/mysql/conf.d/slave.cnf
@@ -76,13 +76,12 @@ slave:
       image-tag: <- `${image-tag}`
       image: mysql
 
-
 configure: 
   defines: runnable
   variables:
     image-tag:
       type: string
-      value: latest
+      value: <- $image_tag
     mysql_slave_password:
       type: string
       env: MYSQL_SLAVE_PASSWORD
@@ -99,10 +98,22 @@ configure:
       env: MYSQL_REPLICATION_PASSWORD
       value: <- $mysql_database_root_password
       type: string
+    mysql_password:
+      env: MYSQL_ROOT_PASSWORD
+      value: <- $mysql_database_root_password
+      type: string
+    mysql-master-host:
+      env: MYSQL_MASTER_HOST
+      type: string
+      value: <- get-hostname("monk-mysql/master", "mysql-master") split(".dns.podman") join("")
+    mysql-slave-host:
+      env: MYSQL_SLAVE_HOST
+      type: string
+      value: <- get-hostname("monk-mysql/slave", "mysql-slave") split(".dns.podman") join("")
   containers:
     mysql-configure:
       paths:
-        - /Users/burakhan/www/monkd/monk-mysql/init.sh:/tmp/init.sh
-      bash: /tmp/init.sh; 
+        - /Users/burakhan/www/monkd/monk-mysql/mysql-master-slave/init.sh:/tmp/init.sh
+      bash: chmod +x /tmp/init.sh; bash /tmp/init.sh 
       image-tag: <- `${image-tag}`
       image: mysql

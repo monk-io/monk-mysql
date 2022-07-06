@@ -1,0 +1,55 @@
+namespace: burakhan
+
+db: 
+  defines: runnable
+  variables:
+    image-tag:
+      type: string
+      value: latest
+    rpc-port:
+      type: int
+      value: 3306
+    mysql_database:
+      type: string
+      value: default
+    mysql_password:
+      type: string
+      value: password
+    mysql_user:
+      type: string
+      value: user
+    mysql_root_password:
+      value: password
+      type: string
+    volume_data:
+      type: string
+      value: /mnt/mysql
+  volumes:
+    important-data:
+        size: 60
+        kind: SSD
+        path: <- $volume_data  
+  containers:
+      paths:
+        - <- `${volume_data}/mysql:/var/lib/mysql`
+      ports:
+        - <- `0.0.0.0:${rpc-port}:3306`
+      environment:
+        - <- `MYSQL_PASSWORD=${mysql_password}`
+        - <- `MYSQL_ROOT_PASSWORD=${mysql_root_password}`
+        - <- `MYSQL_USER=${mysql_user}`
+        - <- `MYSQL_DATABASE=${mysql_database}`
+      image-tag: <- `${image-tag}`
+      image: docker.io/library/mysql
+  version: latest
+  metadata:
+    defines: metadata
+    tags: database
+    website: https://www.mysql.com/
+    email: burakhanozyol@gmail.com
+    name: MySQL
+    publisher: Monk Builders Team
+    icon: https://assets.monk.io/icons/MySQL-Logo.wine.png
+    source: https://github.com/docker-library/mysql
+    description: MySQL is a widely used, open-source relational database management
+      system (RDBMS).

@@ -4,6 +4,9 @@ stack:
   defines: process-group
   runnable-list:
     - monk-mysql/master
+    - monk-mysql/slave
+    - monk-mysql/configure
+
   variables:
     mysql_database_user: "db_user"
     mysql_database_root_password: "RhgDPXPEnAgJ5q5g"
@@ -14,3 +17,4 @@ stack:
       value: "RhgDPXPEnAgxxXYZ"
     server_name: wordpress.burakhan.com
     email: burakhan@burakhan.com
+    image_tag: latest
