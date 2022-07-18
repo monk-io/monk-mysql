@@ -1,19 +1,14 @@
-namespace: monk-mysql
-
+namespace:  monk-mysql
 stack:
   defines: process-group
   runnable-list:
-    - monk-mysql/master
-    - monk-mysql/slave
-    - monk-mysql/configure
+    -  monk-mysql/db
   variables:
     mysql_database_user: "db_user"
     mysql_database_root_password: "RhgDPXPEnAgJ5q5g"
     mysql_database_name: "wpdb"
-    mysql_replication_user: repl1
     mysql_database_password: 
       type: string
       value: "RhgDPXPEnAgxxXYZ"
     server_name: wordpress.burakhan.com
-    email: burakhan@burakhan.com
-    image_tag: latest
+    mysql-image-tag: 5.6.47

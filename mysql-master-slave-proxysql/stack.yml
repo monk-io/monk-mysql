@@ -1,11 +1,11 @@
-namespace: monk-mysql
+namespace: monk-mysql-proxysql
 
 stack:
   defines: process-group
   runnable-list:
-    - monk-mysql/master
-    - monk-mysql/slave
-    - monk-mysql/configure
+    - monk-mysql-proxysql/master
+    - monk-mysql-proxysql/slave
+    - monk-mysql-proxysql/lb
   variables:
     mysql_database_user: "db_user"
     mysql_database_root_password: "RhgDPXPEnAgJ5q5g"

@@ -1,4 +1,5 @@
-namespace: monk-mysql
+namespace: monk-mysql-proxysql
+
 
 master: 
   defines: runnable
@@ -221,3 +222,34 @@ configure:
             - monk-mysql/slave
         timeout: 60
 
+
+lb: 
+  defines: runnable
+  variables:
+    mysql-master-host:
+      env: MYSQL_MASTER_HOST
+      type: string
+      value: <- get-hostname("monk-mysql-proxysql/master", "mysql-master") split(".dns.podman") join("")
+    mysql-slave-host: 
+      env: MYSQL_SLAVE_HOST
+      type: string
+      value: <- get-hostname("monk-mysql-proxysql/slave", "mysql-slave") split(".dns.podman") join("")
+    my-hostname:
+      env: MYSQL_PROXY_HOST
+      type: string
+      value: <- get-hostname("monk-mysql-proxysql/lb", "monk-proxysql") split(".dns.podman") join("")
+    mysql_password:
+      env: MYSQL_ROOT_PASSWORD
+      value: <- $mysql_database_root_password
+    proxysql_data:
+      type: string
+      value: proxysql-data
+  containers:
+    monk-proxysql:
+      ports:
+        - <- `0.0.0.0:6032:6032`
+        - <- `0.0.0.0:6033:6033`
+      paths:
+        - <- `${monk-volume-path}/${proxysql_data}:/var/lib/proxysql`
+        - <- `/Users/burakhan/www/monkd/monk-mysql/mysql-master-slave-proxysql/config/proxysql:/etc/mysql/conf.d/`  
+      image: severalnines/proxysql

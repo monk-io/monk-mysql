@@ -9,3 +9,4 @@ read-only=1
 slave-skip-errors = 1062
 skip-host-cache
 skip-name-resolve
+relay-log=mysql-relay-bin
