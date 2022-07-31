@@ -84,21 +84,21 @@ slave1:
       env: MYSQL_ROOT_PASSWORD
       value: <- $mysql_database_root_password
       type: string
-    volume_data:
+    slave1-volume_data:
         type: string
         value: <- $mysql_database_data_volume_path
   volumes:
-    important-data:
+    slave1-important-data:
         size: <- $mysql_database_data_volume_size
         kind: SSD
-        path: <- $volume_data
+        path: <- $slave1-volume_data
   containers:
     mysql-slave-1:
       ports:
-        - <- `0.0.0.0:${mysql_port}:3306`
+        - <- `0.0.0.0:${mysql_slave1_database_port}:3306`
       image-tag: <- `${image_tag}`
       paths:
-        - <- `${volume_data}/mysql:/var/lib/mysql`
+        - <- `${slave1-volume_data}/mysql:/var/lib/mysql`
       image: mysql
   files:
     defines: files
@@ -145,21 +145,21 @@ slave2:
       env: MYSQL_ROOT_PASSWORD
       value: <- $mysql_database_root_password
       type: string
-    volume_data:
+    slave2-volume_data:
         type: string
         value: <- $mysql_database_data_volume_path
   volumes:
-    important-data:
+    slave2-important-data:
         size: <- $mysql_database_data_volume_size
         kind: SSD
-        path: <- $volume_data
+        path: <- $slave2-volume_data
   containers:
     mysql-slave-2:
       ports:
-        - <- `0.0.0.0:${mysql_port}:3306`
+        - <- `0.0.0.0:${mysql_slave2_database_port}:3306`
       image-tag: <- `${image_tag}`
       paths:
-        - <- `${volume_data}/mysql:/var/lib/mysql`
+        - <- `${slave2-volume_data}/mysql:/var/lib/mysql`
       image: mysql
   files:
     defines: files
@@ -254,11 +254,9 @@ configure:
         mysql -h $MYSQL_SLAVE2_HOST -u root -p$MYSQL_ROOT_PASSWORD -e "STOP SLAVE;";
         mysql -h $MYSQL_SLAVE2_HOST -u root -p$MYSQL_ROOT_PASSWORD < /tmp/master_dump.sql
 
-        # masterに繋いで bin-logのファイル名とポジションを取得する
         log_file=`mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "SHOW MASTER STATUS\G" | grep File: | awk '{print $2}'`
         pos=`mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "SHOW MASTER STATUS\G" | grep Position: | awk '{print $2}'`
 
-        # slaveの開始
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE1_HOST -e "RESET SLAVE";
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE1_HOST -e "CHANGE MASTER TO MASTER_HOST='$MYSQL_MASTER_HOST', MASTER_USER='root', MASTER_PASSWORD='$MYSQL_ROOT_PASSWORD', MASTER_LOG_FILE='${log_file}', MASTER_LOG_POS=${pos};"
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE1_HOST -e "start slave"
@@ -267,7 +265,6 @@ configure:
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE2_HOST -e "CHANGE MASTER TO MASTER_HOST='$MYSQL_MASTER_HOST', MASTER_USER='root', MASTER_PASSWORD='$MYSQL_ROOT_PASSWORD', MASTER_LOG_FILE='${log_file}', MASTER_LOG_POS=${pos};"
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE2_HOST -e "start slave"
 
-        # masterをunlockする
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "UNLOCK TABLES;"
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "ALTER USER 'root'@'%' IDENTIFIED WITH mysql_native_password BY '$MYSQL_ROOT_PASSWORD';"
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "CREATE USER '$MYSQL_MONITOR_USER'@'%' IDENTIFIED BY '$MYSQL_MONITOR_PASSWORD';"
@@ -278,8 +275,8 @@ configure:
   depends:
     wait-for:
         runnables:
-            - monk-mysql/master
-            - monk-mysql/slave-1
-            - monk-mysql/slave-2
+            - monk-mysql-master-slave/master
+            - monk-mysql-master-slave/slave1
+            - monk-mysql-master-slave/slave2
         timeout: 60
 

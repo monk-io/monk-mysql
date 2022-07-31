@@ -5,7 +5,8 @@ stack:
   runnable-list:
     - monk-mysql-master-slave/master
     - monk-mysql-master-slave/slave1
-
+    - monk-mysql-master-slave/slave2
+    - monk-mysql-master-slave/configure
   variables:
     mysql_database_repl_user: "repl"
     mysql_database_repl_password: "RhgDPXPEnAgJ5q5g"
