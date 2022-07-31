@@ -14,7 +14,7 @@ stack:
   variables:
     mysql_database_user: "db_user"
     mysql_database_root_password: "RhgDPXPEnAgJ5q5g"
-    mysql_database_monitor_user: "RhgDPXPEnAgJ5q5g"
+    mysql_database_monitor_user: "monitor"
     mysql_database_monitor_password: "RhgDPXPEnAgJ5q5g"
     mysql_database_name: "wpdb"
     mysql_replication_user: repl1

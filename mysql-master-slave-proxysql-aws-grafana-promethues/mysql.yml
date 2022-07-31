@@ -3,6 +3,15 @@ namespace: monk-mysql-proxysql
 
 master: 
   defines: runnable
+  nodes:
+    mysql-master-node:
+      provider: aws
+      tag: mysql-master
+      instance-type: t3.xlarge
+      region: eu-north-1
+      disk-size: 60
+  affinity:
+    name: mysql-master-node
   variables:
     image-tag:
       type: string
@@ -57,6 +66,15 @@ master:
 
 slave: 
   defines: runnable
+  nodes:
+    mysql-slave-node:
+      provider: aws
+      tag: mysql-master
+      instance-type: t3.xlarge
+      region: eu-north-1
+      disk-size: 60
+  affinity:
+    name: mysql-slave-node
   variables:
     image-tag:
       type: string
@@ -201,6 +219,15 @@ configure:
 
 lb: 
   defines: runnable
+  nodes:
+    mysql-lb-node:
+      provider: aws
+      tag: mysql-master
+      instance-type: t3.xlarge
+      region: eu-north-1
+      disk-size: 60
+  affinity:
+    name: mysql-lb-node
   variables:
     mysql-master-host:
       env: MYSQL_MASTER_HOST
@@ -323,6 +350,15 @@ lb:
 
 promethues-mysql-master-exporter: 
   defines: runnable
+  nodes:
+    mysql-promethues-expoter-master-node:
+      provider: aws
+      tag: mysql-master
+      instance-type: t3.xlarge
+      region: eu-north-1
+      disk-size: 60
+  affinity:
+    name: mysql-promethues-expoter-master-node
   variables:
     database_name:
       type: string
@@ -342,6 +378,15 @@ promethues-mysql-master-exporter:
 
 promethues-mysql-slave-exporter: 
   defines: runnable
+  nodes:
+    mysql-promethues-expoter-slave-node:
+      provider: aws
+      tag: mysql-master
+      instance-type: t3.xlarge
+      region: eu-north-1
+      disk-size: 60
+  affinity:
+    name: mysql-promethues-expoter-slave-node
   variables:
     database_name:
       type: string
@@ -361,6 +406,15 @@ promethues-mysql-slave-exporter:
 
 promethues: 
   defines: runnable
+  nodes:
+    mysql-promethues:
+      provider: aws
+      tag: mysql-promethues
+      instance-type: t3.xlarge
+      region: eu-north-1
+      disk-size: 60
+  affinity:
+    name: mysql-promethues
   variables:
     mysql-exporter-master:
       type: string
@@ -404,6 +458,15 @@ promethues:
 
 grafana: 
   defines: runnable
+  nodes:
+    mysql-grafana:
+      provider: aws
+      tag: mysql-grafana
+      instance-type: t3.xlarge
+      region: eu-north-1
+      disk-size: 60
+  affinity:
+    name: mysql-grafana
   containers:
     mysql-grafana:
       image: grafana/grafana
