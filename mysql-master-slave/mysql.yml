@@ -1,14 +1,14 @@
-namespace: monk-mysql
+namespace: monk-mysql-master-slave
 
 master: 
   defines: runnable
   variables:
-    image-tag:
+    image_tag:
       type: string
-      value: <- $image_tag
-    rpc-port:
+      value: <- $mysql_image_tag
+    mysql_port:
       type: int
-      value: 3306
+      value: <- $mysql_master_database_port
     database_name:
       type: string
       env: MYSQL_DATABASE
@@ -17,7 +17,7 @@ master:
       env: MYSQL_USER
       type: string
       value: <- $mysql_database_user
-    mpassword: 
+    database_password: 
       env: MYSQL_PASSWORD
       type: string
       value: <- $mysql_database_password
@@ -25,18 +25,21 @@ master:
       env: MYSQL_ROOT_PASSWORD
       value: <- $mysql_database_root_password
       type: string
-    mysql_master_data:
-      type: string
-      value: mysql-master-data
+    volume_data:
+        type: string
+        value: <- $mysql_database_data_volume_path
+  volumes:
+    important-data:
+        size: <- $mysql_database_data_volume_size
+        kind: SSD
+        path: <- $volume_data
   containers:
     mysql-master:
       paths:
-        - <- `${monk-volume-path}/${mysql_master_data}:/var/lib/mysql`
-        - <- `/Users/burakhan/www/monkd/monk-mysql/mysql-master-slave/config/master:/etc/mysql/conf.d/`
+        - <- `${volume_data}/mysql:/var/lib/mysql`
       ports:
-        - <- `0.0.0.0:${rpc-port}:3306`
-      
-      image-tag: <- `${image-tag}`
+        - <- `0.0.0.0:${mysql_port}:3306`
+      image-tag: <- `${image_tag}`
       image: mysql
   files:
     defines: files
@@ -56,20 +59,24 @@ master:
       path: /etc/mysql/conf.d/master.cnf
       mode: 600
 
-slave: 
+slave1: 
   defines: runnable
   variables:
-    image-tag:
+    image_tag:
       type: string
-      value: <- $image_tag
-    rpc-port:
+      value: <- $mysql_image_tag
+    mysql_port:
       type: int
-      value: 3307
+      value: <- $mysql_slave1_database_port
+    database_name:
+      type: string
+      env: MYSQL_DATABASE
+      value: <- $mysql_database_name
     database_user:
       env: MYSQL_USER
       type: string
       value: <- $mysql_database_user
-    mpassword: 
+    database_password: 
       env: MYSQL_PASSWORD
       type: string
       value: <- $mysql_database_password
@@ -77,18 +84,21 @@ slave:
       env: MYSQL_ROOT_PASSWORD
       value: <- $mysql_database_root_password
       type: string
-    mysql_slave_data:
-      type: string
-      value: mysql-slave-data
+    volume_data:
+        type: string
+        value: <- $mysql_database_data_volume_path
+  volumes:
+    important-data:
+        size: <- $mysql_database_data_volume_size
+        kind: SSD
+        path: <- $volume_data
   containers:
-    mysql-slave:
+    mysql-slave-1:
       ports:
-        - <- `0.0.0.0:${rpc-port}:3306`
-      command: '--server-id=8' 
-      image-tag: <- `${image-tag}`
+        - <- `0.0.0.0:${mysql_port}:3306`
+      image-tag: <- `${image_tag}`
       paths:
-        - <- `${monk-volume-path}/${mysql_slave_data}:/var/lib/mysql`
-        - <- `/Users/burakhan/www/monkd/monk-mysql/mysql-master-slave/config/slave:/etc/mysql/conf.d/`
+        - <- `${volume_data}/mysql:/var/lib/mysql`
       image: mysql
   files:
     defines: files
@@ -96,7 +106,7 @@ slave:
       raw: true
       contents: |
         [mysqld]
-        server-id=9
+        server-id=2
         log-bin=mysql-bin
         log-slave-updates=1
         auto_increment_increment=2
@@ -106,16 +116,77 @@ slave:
         slave-skip-errors = 1062
         skip-host-cache
         skip-name-resolve
-      container: mysql-slave
+      container: mysql-slave-1
       path: /etc/mysql/conf.d/slave1.cnf
+      mode: 600
+
+slave2: 
+  defines: runnable
+  variables:
+    image_tag:
+      type: string
+      value: <- $mysql_image_tag
+    mysql_port:
+      type: int
+      value: <- $mysql_slave2_database_port
+    database_name:
+      type: string
+      env: MYSQL_DATABASE
+      value: <- $mysql_database_name
+    database_user:
+      env: MYSQL_USER
+      type: string
+      value: <- $mysql_database_user
+    database_password: 
+      env: MYSQL_PASSWORD
+      type: string
+      value: <- $mysql_database_password
+    database_root_password:
+      env: MYSQL_ROOT_PASSWORD
+      value: <- $mysql_database_root_password
+      type: string
+    volume_data:
+        type: string
+        value: <- $mysql_database_data_volume_path
+  volumes:
+    important-data:
+        size: <- $mysql_database_data_volume_size
+        kind: SSD
+        path: <- $volume_data
+  containers:
+    mysql-slave-2:
+      ports:
+        - <- `0.0.0.0:${mysql_port}:3306`
+      image-tag: <- `${image_tag}`
+      paths:
+        - <- `${volume_data}/mysql:/var/lib/mysql`
+      image: mysql
+  files:
+    defines: files
+    my-file:
+      raw: true
+      contents: |
+        [mysqld]
+        server-id=3
+        log-bin=mysql-bin
+        log-slave-updates=1
+        auto_increment_increment=2
+        auto_increment_offset=2
+        datadir=/var/lib/mysql
+        read-only=1
+        slave-skip-errors = 1062
+        skip-host-cache
+        skip-name-resolve
+      container: mysql-slave-2
+      path: /etc/mysql/conf.d/slave2.cnf
       mode: 600
 
 configure: 
   defines: runnable
   variables:
-    image-tag:
+    image_tag:
       type: string
-      value: <- $image_tag
+      value: <- $mysql_image_tag
     mysql_slave_password:
       type: string
       env: MYSQL_SLAVE_PASSWORD
@@ -127,90 +198,80 @@ configure:
     mysql_repl_user: 
       env: MYSQL_REPLICATION_USER
       type: string
-      value: <- $mysql_replication_user
+      value: <- $mysql_database_repl_user
     mysql_repl_password:
       env: MYSQL_REPLICATION_PASSWORD
-      value: <- $mysql_database_root_password
+      value: <- $mysql_database_repl_password
       type: string
-    mysql_password:
+    database_root_password:
       env: MYSQL_ROOT_PASSWORD
       value: <- $mysql_database_root_password
       type: string
-    mysql-master-host:
+    database_master_host:
       env: MYSQL_MASTER_HOST
       type: string
-      value: <- get-hostname("monk-mysql/master", "mysql-master") split(".dns.podman") join("")
-    mysql-slave-host:
-      env: MYSQL_SLAVE_HOST
+      value: <- get-hostname("monk-mysql-master-slave/master", "mysql-master") split(".dns.podman") join("")
+    database_slave1_host:
+      env: MYSQL_SLAVE1_HOST
       type: string
-      value: <- get-hostname("monk-mysql/slave", "mysql-slave") split(".dns.podman") join("")
+      value: <- get-hostname("monk-mysql-master-slave/slave1", "mysql-slave-1") split(".dns.podman") join("")
+    mysql-slave2-host:
+      env: MYSQL_SLAVE2_HOST
+      type: string
+      value: <- get-hostname("monk-mysql-master-slave/slave2", "mysql-slave-2") split(".dns.podman") join("")
+    database_monitor_password:
+      env: MYSQL_MONITOR_PASSWORD
+      value: <- $mysql_database_monitor_password
+      type: string
+    database_monitor_user:
+      env: MYSQL_MONITOR_USER
+      value: <- $mysql_database_monitor_user
+      type: string
   containers:
     mysql-configure:
       bash: /tmp/init.sh
-      image-tag: <- `${image-tag}`
+      image-tag: <- `${image_tag}`
       image: mysql
   files:
     defines: files
     my-file:
       raw: true
       contents: |
-        #!/bin/bash
-        BASE_PATH=$(dirname $0)
+        #!/bin/sh
+        sleep 20
+        while ! mysqladmin ping -u root -h $MYSQL_MASTER_HOST -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST --silent; do
+          sleep 1
+        done
 
-        echo "Waiting for mysql to get up"
-        # Give 60 seconds for master and slave to come up
-        sleep 60
+        mysql -u root -h $MYSQL_MASTER_HOST -p$MYSQL_ROOT_PASSWORD  -e "RESET MASTER;"
+        mysql -u root -h $MYSQL_MASTER_HOST -p$MYSQL_ROOT_PASSWORD  -e "FLUSH TABLES WITH READ LOCK;"
 
-        echo "Create MySQL Servers (master / slave repl)"
-        echo "-----------------"
+        mysqldump -uroot -h $MYSQL_MASTER_HOST  -p$MYSQL_ROOT_PASSWORD --all-databases --source-data --single-transaction --flush-logs --events --result-file=/tmp/master_dump.sql
 
+        mysql -h $MYSQL_SLAVE1_HOST -u root -p$MYSQL_ROOT_PASSWORD -e "STOP SLAVE;";
+        mysql -h $MYSQL_SLAVE1_HOST -u root -p$MYSQL_ROOT_PASSWORD < /tmp/master_dump.sql
 
-        echo "* Create replication user"
+        mysql -h $MYSQL_SLAVE2_HOST -u root -p$MYSQL_ROOT_PASSWORD -e "STOP SLAVE;";
+        mysql -h $MYSQL_SLAVE2_HOST -u root -p$MYSQL_ROOT_PASSWORD < /tmp/master_dump.sql
 
-        mysql --host $MYSQL_SLAVE_HOST -uroot -p$MYSQL_SLAVE_PASSWORD -AN -e 'STOP SLAVE;';
-        mysql --host $MYSQL_SLAVE_HOST -uroot -p$MYSQL_MASTER_PASSWORD -AN -e 'RESET SLAVE ALL;';
-        mysql --host $MYSQL_MASTER_HOST -uroot -p$MYSQL_MASTER_PASSWORD -AN -e "CREATE USER '$MYSQL_REPLICATION_USER'@'%' IDENTIFIED WITH mysql_native_password BY '$MYSQL_REPLICATION_PASSWORD';"
-        mysql --host $MYSQL_MASTER_HOST -uroot -p$MYSQL_MASTER_PASSWORD -AN -e "GRANT REPLICATION SLAVE ON *.* TO '$MYSQL_REPLICATION_USER'@'%';"
-        mysql --host $MYSQL_MASTER_HOST -uroot -p$MYSQL_MASTER_PASSWORD -AN -e 'flush privileges;'
+        # masterに繋いで bin-logのファイル名とポジションを取得する
+        log_file=`mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "SHOW MASTER STATUS\G" | grep File: | awk '{print $2}'`
+        pos=`mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "SHOW MASTER STATUS\G" | grep Position: | awk '{print $2}'`
 
+        # slaveの開始
+        mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE1_HOST -e "RESET SLAVE";
+        mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE1_HOST -e "CHANGE MASTER TO MASTER_HOST='$MYSQL_MASTER_HOST', MASTER_USER='root', MASTER_PASSWORD='$MYSQL_ROOT_PASSWORD', MASTER_LOG_FILE='${log_file}', MASTER_LOG_POS=${pos};"
+        mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE1_HOST -e "start slave"
 
-        echo "* Set MySQL01 as master on MySQL02"
+        mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE2_HOST -e "RESET SLAVE";
+        mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE2_HOST -e "CHANGE MASTER TO MASTER_HOST='$MYSQL_MASTER_HOST', MASTER_USER='root', MASTER_PASSWORD='$MYSQL_ROOT_PASSWORD', MASTER_LOG_FILE='${log_file}', MASTER_LOG_POS=${pos};"
+        mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE2_HOST -e "start slave"
 
-        MYSQL01_Position=$(eval "mysql --host $MYSQL_MASTER_HOST -uroot -p$MYSQL_MASTER_PASSWORD -e 'show master status \G' | grep Position | sed -n -e 's/^.*: //p'")
-        MYSQL01_File=$(eval "mysql --host $MYSQL_MASTER_HOST -uroot -p$MYSQL_MASTER_PASSWORD -e 'show master status \G'     | grep File     | sed -n -e 's/^.*: //p'")
-        MASTER_IP=$(eval "getent hosts $MYSQL_MASTER_HOST|awk '{print \$1}'")
-        echo $MASTER_IP
-        mysql --host $MYSQL_SLAVE_HOST -uroot -p$MYSQL_SLAVE_PASSWORD -AN -e "CHANGE MASTER TO master_host='$MYSQL_MASTER_HOST', master_port=3306, \
-                master_user='$MYSQL_REPLICATION_USER', master_password='$MYSQL_REPLICATION_PASSWORD', master_log_file='$MYSQL01_File', \
-                master_log_pos=$MYSQL01_Position;"
-
-        echo "* Set MySQL02 as master on MySQL01"
-
-        MYSQL02_Position=$(eval "mysql --host $MYSQL_SLAVE_HOST -uroot -p$MYSQL_SLAVE_PASSWORD -e 'show master status \G' | grep Position | sed -n -e 's/^.*: //p'")
-        MYSQL02_File=$(eval "mysql --host $MYSQL_SLAVE_HOST -uroot -p$MYSQL_SLAVE_PASSWORD -e 'show master status \G'     | grep File     | sed -n -e 's/^.*: //p'")
-
-        SLAVE_IP=$(eval "getent hosts $MYSQL_SLAVE_HOST|awk '{print \$1}'")
-        echo $SLAVE_IP
-        mysql --host $MYSQL_MASTER_HOST -uroot -p$MYSQL_MASTER_PASSWORD -AN -e "CHANGE MASTER TO master_host='$MYSQL_SLAVE_HOST', master_port=3306, \
-                master_user='$MYSQL_REPLICATION_USER', master_password='$MYSQL_REPLICATION_PASSWORD', master_log_file='$MYSQL02_File', \
-                master_log_pos=$MYSQL02_Position;"
-
-        echo "* Start Slave on both Servers"
-        mysql --host $MYSQL_SLAVE_HOST -uroot -p$MYSQL_SLAVE_PASSWORD -AN -e "start slave;"
-
-        echo "Increase the max_connections to 2000"
-        mysql --host $MYSQL_MASTER_HOST -uroot -p$MYSQL_MASTER_PASSWORD -AN -e 'set GLOBAL max_connections=2000';
-        mysql --host $MYSQL_SLAVE_HOST -uroot -p$MYSQL_SLAVE_PASSWORD -AN -e 'set GLOBAL max_connections=2000';
-
-        mysql --host $MYSQL_SLAVE_HOST -uroot -p$MYSQL_MASTER_PASSWORD -e "show slave status \G"
-
-        echo "MySQL servers created!"
-        echo "--------------------"
-        echo
-        echo Variables available fo you :-
-        echo
-        echo MYSQL01_IP       : $MYSQL_MASTER_HOST
-        echo MYSQL02_IP       : $MYSQL_SLAVE_HOST
+        # masterをunlockする
+        mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "UNLOCK TABLES;"
+        mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "ALTER USER 'root'@'%' IDENTIFIED WITH mysql_native_password BY '$MYSQL_ROOT_PASSWORD';"
+        mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "CREATE USER '$MYSQL_MONITOR_USER'@'%' IDENTIFIED BY '$MYSQL_MONITOR_PASSWORD';"
+        mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "FLUSH PRIVILEGES;"
       container: mysql-configure
       path: /tmp/init.sh
       mode: 755
@@ -218,6 +279,7 @@ configure:
     wait-for:
         runnables:
             - monk-mysql/master
-            - monk-mysql/slave
+            - monk-mysql/slave-1
+            - monk-mysql/slave-2
         timeout: 60
 
