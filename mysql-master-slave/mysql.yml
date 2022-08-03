@@ -55,9 +55,10 @@ master:
         innodb_flush_method = O_DIRECT
         skip-host-cache
         skip-name-resolve
+        default-authentication-plugin=mysql_native_password
       container: mysql-master
       path: /etc/mysql/conf.d/master.cnf
-      mode: 600
+      mode: 644
 
 slave1: 
   defines: runnable
@@ -116,9 +117,10 @@ slave1:
         slave-skip-errors = 1062
         skip-host-cache
         skip-name-resolve
+        default-authentication-plugin=mysql_native_password
       container: mysql-slave-1
       path: /etc/mysql/conf.d/slave1.cnf
-      mode: 600
+      mode: 644
 
 slave2: 
   defines: runnable
@@ -177,9 +179,10 @@ slave2:
         slave-skip-errors = 1062
         skip-host-cache
         skip-name-resolve
+        default-authentication-plugin=mysql_native_password
       container: mysql-slave-2
       path: /etc/mysql/conf.d/slave2.cnf
-      mode: 600
+      mode: 644
 
 configure: 
   defines: runnable
@@ -246,6 +249,11 @@ configure:
         mysql -u root -h $MYSQL_MASTER_HOST -p$MYSQL_ROOT_PASSWORD  -e "RESET MASTER;"
         mysql -u root -h $MYSQL_MASTER_HOST -p$MYSQL_ROOT_PASSWORD  -e "FLUSH TABLES WITH READ LOCK;"
 
+        mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "UNLOCK TABLES;"
+        mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "ALTER USER 'root'@'%' IDENTIFIED WITH mysql_native_password BY '$MYSQL_ROOT_PASSWORD';"
+        mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "CREATE USER '$MYSQL_MONITOR_USER'@'%' IDENTIFIED BY '$MYSQL_MONITOR_PASSWORD';"
+        mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "FLUSH PRIVILEGES;"
+        
         mysqldump -uroot -h $MYSQL_MASTER_HOST  -p$MYSQL_ROOT_PASSWORD --all-databases --source-data --single-transaction --flush-logs --events --result-file=/tmp/master_dump.sql
 
         mysql -h $MYSQL_SLAVE1_HOST -u root -p$MYSQL_ROOT_PASSWORD -e "STOP SLAVE;";
@@ -265,10 +273,6 @@ configure:
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE2_HOST -e "CHANGE MASTER TO MASTER_HOST='$MYSQL_MASTER_HOST', MASTER_USER='root', MASTER_PASSWORD='$MYSQL_ROOT_PASSWORD', MASTER_LOG_FILE='${log_file}', MASTER_LOG_POS=${pos};"
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE2_HOST -e "start slave"
 
-        mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "UNLOCK TABLES;"
-        mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "ALTER USER 'root'@'%' IDENTIFIED WITH mysql_native_password BY '$MYSQL_ROOT_PASSWORD';"
-        mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "CREATE USER '$MYSQL_MONITOR_USER'@'%' IDENTIFIED BY '$MYSQL_MONITOR_PASSWORD';"
-        mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "FLUSH PRIVILEGES;"
       container: mysql-configure
       path: /tmp/init.sh
       mode: 755

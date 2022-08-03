@@ -1,24 +1,14 @@
-namespace: monk-mysql-proxysql
-
+namespace: monk-mysql-master-slave-proxysql
 
 master: 
   defines: runnable
-  nodes:
-    mysql-master-node:
-      provider: aws
-      tag: mysql-master
-      instance-type: t3.xlarge
-      region: eu-north-1
-      disk-size: 60
-  affinity:
-    name: mysql-master-node
   variables:
-    image-tag:
+    image_tag:
       type: string
-      value: <- $image_tag
-    rpc-port:
+      value: <- $mysql_image_tag
+    mysql_port:
       type: int
-      value: 3306
+      value: <- $mysql_master_database_port
     database_name:
       type: string
       env: MYSQL_DATABASE
@@ -27,7 +17,7 @@ master:
       env: MYSQL_USER
       type: string
       value: <- $mysql_database_user
-    mpassword: 
+    database_password: 
       env: MYSQL_PASSWORD
       type: string
       value: <- $mysql_database_password
@@ -35,18 +25,24 @@ master:
       env: MYSQL_ROOT_PASSWORD
       value: <- $mysql_database_root_password
       type: string
-    mysql_master_data:
-      type: string
-      value: mysql-master-data
+    volume_data:
+        type: string
+        value: <- $mysql_database_data_volume_path
+  volumes:
+    important-data:
+        size: <- $mysql_database_data_volume_size
+        kind: SSD
+        path: <- $volume_data
   containers:
     mysql-master:
       paths:
-        - <- `${monk-volume-path}/${mysql_master_data}:/var/lib/mysql`
+        - <- `${volume_data}/mysql:/var/lib/mysql`
       ports:
-        - <- `0.0.0.0:${rpc-port}:3306`
-      image-tag: <- `${image-tag}`
+        - <- `0.0.0.0:${mysql_port}:3306`
+      image-tag: <- `${image_tag}`
       image: mysql
   files:
+    defines: files
     my-file:
       raw: true
       contents: |
@@ -64,29 +60,24 @@ master:
       path: /etc/mysql/conf.d/master.cnf
       mode: 644
 
-slave: 
+slave1: 
   defines: runnable
-  nodes:
-    mysql-slave-node:
-      provider: aws
-      tag: mysql-master
-      instance-type: t3.xlarge
-      region: eu-north-1
-      disk-size: 60
-  affinity:
-    name: mysql-slave-node
   variables:
-    image-tag:
+    image_tag:
       type: string
-      value: <- $image_tag
-    rpc-port:
+      value: <- $mysql_image_tag
+    mysql_port:
       type: int
-      value: 3307
+      value: <- $mysql_slave1_database_port
+    database_name:
+      type: string
+      env: MYSQL_DATABASE
+      value: <- $mysql_database_name
     database_user:
       env: MYSQL_USER
       type: string
       value: <- $mysql_database_user
-    mpassword:
+    database_password: 
       env: MYSQL_PASSWORD
       type: string
       value: <- $mysql_database_password
@@ -94,16 +85,21 @@ slave:
       env: MYSQL_ROOT_PASSWORD
       value: <- $mysql_database_root_password
       type: string
-    mysql_slave_data:
-      type: string
-      value: mysql-slave-data
+    slave1-volume_data:
+        type: string
+        value: <- $mysql_database_data_volume_path
+  volumes:
+    slave1-important-data:
+        size: <- $mysql_database_data_volume_size
+        kind: SSD
+        path: <- $slave1-volume_data
   containers:
-    mysql-slave:
+    mysql-slave-1:
       ports:
-        - <- `0.0.0.0:${rpc-port}:3306`
-      image-tag: <- `${image-tag}`
+        - <- `0.0.0.0:${mysql_slave1_database_port}:3306`
+      image-tag: <- `${image_tag}`
       paths:
-        - <- `${monk-volume-path}/${mysql_slave_data}:/var/lib/mysql`
+        - <- `${slave1-volume_data}/mysql:/var/lib/mysql`
       image: mysql
   files:
     defines: files
@@ -111,7 +107,7 @@ slave:
       raw: true
       contents: |
         [mysqld]
-        server-id=9
+        server-id=2
         log-bin=mysql-bin
         log-slave-updates=1
         auto_increment_increment=2
@@ -122,16 +118,78 @@ slave:
         skip-host-cache
         skip-name-resolve
         default-authentication-plugin=mysql_native_password
-      container: mysql-slave
+      container: mysql-slave-1
       path: /etc/mysql/conf.d/slave1.cnf
+      mode: 644
+
+slave2: 
+  defines: runnable
+  variables:
+    image_tag:
+      type: string
+      value: <- $mysql_image_tag
+    mysql_port:
+      type: int
+      value: <- $mysql_slave2_database_port
+    database_name:
+      type: string
+      env: MYSQL_DATABASE
+      value: <- $mysql_database_name
+    database_user:
+      env: MYSQL_USER
+      type: string
+      value: <- $mysql_database_user
+    database_password: 
+      env: MYSQL_PASSWORD
+      type: string
+      value: <- $mysql_database_password
+    database_root_password:
+      env: MYSQL_ROOT_PASSWORD
+      value: <- $mysql_database_root_password
+      type: string
+    slave2-volume_data:
+        type: string
+        value: <- $mysql_database_data_volume_path
+  volumes:
+    slave2-important-data:
+        size: <- $mysql_database_data_volume_size
+        kind: SSD
+        path: <- $slave2-volume_data
+  containers:
+    mysql-slave-2:
+      ports:
+        - <- `0.0.0.0:${mysql_slave2_database_port}:3306`
+      image-tag: <- `${image_tag}`
+      paths:
+        - <- `${slave2-volume_data}/mysql:/var/lib/mysql`
+      image: mysql
+  files:
+    defines: files
+    my-file:
+      raw: true
+      contents: |
+        [mysqld]
+        server-id=3
+        log-bin=mysql-bin
+        log-slave-updates=1
+        auto_increment_increment=2
+        auto_increment_offset=2
+        datadir=/var/lib/mysql
+        read-only=1
+        slave-skip-errors = 1062
+        skip-host-cache
+        skip-name-resolve
+        default-authentication-plugin=mysql_native_password
+      container: mysql-slave-2
+      path: /etc/mysql/conf.d/slave2.cnf
       mode: 644
 
 configure: 
   defines: runnable
   variables:
-    image-tag:
+    image_tag:
       type: string
-      value: <- $image_tag
+      value: <- $mysql_image_tag
     mysql_slave_password:
       type: string
       env: MYSQL_SLAVE_PASSWORD
@@ -143,35 +201,39 @@ configure:
     mysql_repl_user: 
       env: MYSQL_REPLICATION_USER
       type: string
-      value: <- $mysql_replication_user
+      value: <- $mysql_database_repl_user
     mysql_repl_password:
       env: MYSQL_REPLICATION_PASSWORD
-      value: <- $mysql_database_root_password
+      value: <- $mysql_database_repl_password
       type: string
-    mpassword:
+    database_root_password:
       env: MYSQL_ROOT_PASSWORD
       value: <- $mysql_database_root_password
       type: string
-    monitor_user_password:
+    database_master_host:
+      env: MYSQL_MASTER_HOST
+      type: string
+      value: <- get-hostname("monk-mysql-master-slave-proxysql/master", "mysql-master") split(".dns.podman") join("")
+    database_slave1_host:
+      env: MYSQL_SLAVE1_HOST
+      type: string
+      value: <- get-hostname("monk-mysql-master-slave-proxysql/slave1", "mysql-slave-1") split(".dns.podman") join("")
+    mysql-slave2-host:
+      env: MYSQL_SLAVE2_HOST
+      type: string
+      value: <- get-hostname("monk-mysql-master-slave-proxysql/slave2", "mysql-slave-2") split(".dns.podman") join("")
+    database_monitor_password:
       env: MYSQL_MONITOR_PASSWORD
       value: <- $mysql_database_monitor_password
       type: string
-    monitor_user:
+    database_monitor_user:
       env: MYSQL_MONITOR_USER
       value: <- $mysql_database_monitor_user
       type: string
-    mysql-master-host:
-      env: MYSQL_MASTER_HOST
-      type: string
-      value: <- get-hostname("monk-mysql-proxysql/master", "mysql-master") split(".dns.podman") join("")
-    mysql-slave-host:
-      env: MYSQL_SLAVE_HOST
-      type: string
-      value: <- get-hostname("monk-mysql-proxysql/slave", "mysql-slave") split(".dns.podman") join("")
   containers:
     mysql-configure:
       bash: /tmp/init.sh
-      image-tag: <- `${image-tag}`
+      image-tag: <- `${image_tag}`
       image: mysql
   files:
     defines: files
@@ -187,60 +249,70 @@ configure:
         mysql -u root -h $MYSQL_MASTER_HOST -p$MYSQL_ROOT_PASSWORD  -e "RESET MASTER;"
         mysql -u root -h $MYSQL_MASTER_HOST -p$MYSQL_ROOT_PASSWORD  -e "FLUSH TABLES WITH READ LOCK;"
 
-        mysqldump -uroot -h $MYSQL_MASTER_HOST  -p$MYSQL_ROOT_PASSWORD --all-databases --source-data --single-transaction --flush-logs --events --result-file=/tmp/master_dump.sql
-
-        mysql -h $MYSQL_SLAVE_HOST -u root -p$MYSQL_ROOT_PASSWORD -e "STOP SLAVE;";
-        mysql -h $MYSQL_SLAVE_HOST -u root -p$MYSQL_ROOT_PASSWORD < /tmp/master_dump.sql
-
-        # masterに繋いで bin-logのファイル名とポジションを取得する
-        log_file=`mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "SHOW MASTER STATUS\G" | grep File: | awk '{print $2}'`
-        pos=`mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "SHOW MASTER STATUS\G" | grep Position: | awk '{print $2}'`
-
-        # slaveの開始
-        mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE_HOST -e "RESET SLAVE";
-        mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE_HOST -e "CHANGE MASTER TO MASTER_HOST='$MYSQL_MASTER_HOST', MASTER_USER='root', MASTER_PASSWORD='$MYSQL_ROOT_PASSWORD', MASTER_LOG_FILE='${log_file}', MASTER_LOG_POS=${pos};"
-        mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE_HOST -e "start slave"
-
-        # masterをunlockする
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "UNLOCK TABLES;"
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "ALTER USER 'root'@'%' IDENTIFIED WITH mysql_native_password BY '$MYSQL_ROOT_PASSWORD';"
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "CREATE USER '$MYSQL_MONITOR_USER'@'%' IDENTIFIED BY '$MYSQL_MONITOR_PASSWORD';"
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "FLUSH PRIVILEGES;"
+
+        mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE1_HOST -e "UNLOCK TABLES;"
+        mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE1_HOST -e "ALTER USER 'root'@'%' IDENTIFIED WITH mysql_native_password BY '$MYSQL_ROOT_PASSWORD';"
+        mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE1_HOST -e "CREATE USER '$MYSQL_MONITOR_USER'@'%' IDENTIFIED BY '$MYSQL_MONITOR_PASSWORD';"
+        mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE1_HOST -e "FLUSH PRIVILEGES;"
+
+        mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE2_HOST -e "UNLOCK TABLES;"
+        mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE2_HOST -e "ALTER USER 'root'@'%' IDENTIFIED WITH mysql_native_password BY '$MYSQL_ROOT_PASSWORD';"
+        mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE2_HOST -e "CREATE USER '$MYSQL_MONITOR_USER'@'%' IDENTIFIED BY '$MYSQL_MONITOR_PASSWORD';"
+        mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE2_HOST -e "FLUSH PRIVILEGES;"
+
+        mysqldump -uroot -h $MYSQL_MASTER_HOST  -p$MYSQL_ROOT_PASSWORD --all-databases --source-data --single-transaction --flush-logs --events --result-file=/tmp/master_dump.sql
+
+        mysql -h $MYSQL_SLAVE1_HOST -u root -p$MYSQL_ROOT_PASSWORD -e "STOP SLAVE;";
+        mysql -h $MYSQL_SLAVE1_HOST -u root -p$MYSQL_ROOT_PASSWORD < /tmp/master_dump.sql
+
+        mysql -h $MYSQL_SLAVE2_HOST -u root -p$MYSQL_ROOT_PASSWORD -e "STOP SLAVE;";
+        mysql -h $MYSQL_SLAVE2_HOST -u root -p$MYSQL_ROOT_PASSWORD < /tmp/master_dump.sql
+
+        log_file=`mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "SHOW MASTER STATUS\G" | grep File: | awk '{print $2}'`
+        pos=`mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "SHOW MASTER STATUS\G" | grep Position: | awk '{print $2}'`
+
+        mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE1_HOST -e "RESET SLAVE";
+        mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE1_HOST -e "CHANGE MASTER TO MASTER_HOST='$MYSQL_MASTER_HOST', MASTER_USER='root', MASTER_PASSWORD='$MYSQL_ROOT_PASSWORD', MASTER_LOG_FILE='${log_file}', MASTER_LOG_POS=${pos};"
+        mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE1_HOST -e "start slave"
+
+        mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE2_HOST -e "RESET SLAVE";
+        mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE2_HOST -e "CHANGE MASTER TO MASTER_HOST='$MYSQL_MASTER_HOST', MASTER_USER='root', MASTER_PASSWORD='$MYSQL_ROOT_PASSWORD', MASTER_LOG_FILE='${log_file}', MASTER_LOG_POS=${pos};"
+        mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE2_HOST -e "start slave"
       container: mysql-configure
       path: /tmp/init.sh
       mode: 755
   depends:
     wait-for:
         runnables:
-            - monk-mysql-proxysql/master
-            - monk-mysql-proxysql/slave
+            - monk-mysql-master-slave-proxysql/master
+            - monk-mysql-master-slave-proxysql/slave1
+            - monk-mysql-master-slave-proxysql/slave2
         timeout: 60
 
 
 lb: 
   defines: runnable
-  nodes:
-    mysql-lb-node:
-      provider: aws
-      tag: mysql-master
-      instance-type: t3.xlarge
-      region: eu-north-1
-      disk-size: 60
-  affinity:
-    name: mysql-lb-node
   variables:
     mysql-master-host:
       env: MYSQL_MASTER_HOST
       type: string
-      value: <- get-hostname("monk-mysql-proxysql/master", "mysql-master") split(".dns.podman") join("")
-    mysql-slave-host: 
-      env: MYSQL_SLAVE_HOST
+      value: <- get-hostname("monk-mysql-master-slave-proxysql/master", "mysql-master") split(".dns.podman") join("")
+    mysql-slave1-host: 
+      env: MYSQL_SLAVE1_HOST
       type: string
-      value: <- get-hostname("monk-mysql-proxysql/slave", "mysql-slave") split(".dns.podman") join("")
+      value: <- get-hostname("monk-mysql-master-slave-proxysql/slave1", "mysql-slave-1") split(".dns.podman") join("")
+    mysql-slave2-host: 
+      env: MYSQL_SLAVE2_HOST
+      type: string
+      value: <- get-hostname("monk-mysql-master-slave-proxysql/slave2", "mysql-slave-2") split(".dns.podman") join("")
     my-hostname:
       env: MYSQL_PROXY_HOST
       type: string
-      value: <- get-hostname("monk-mysql-proxysql/lb", "monk-proxysql") split(".dns.podman") join("")
+      value: <- get-hostname("monk-mysql-master-slave-proxysql/lb", "monk-proxysql") split(".dns.podman") join("")
     mpassword:
       env: MYSQL_ROOT_PASSWORD
       type: string
@@ -268,7 +340,7 @@ lb:
         datadir="/var/lib/proxysql"
         admin_variables=
         {
-          admin_credentials="admin:admin"
+          admin_credentials="{{ v "proxysql_admin_username"}}:{{ v "proxysql_admin_password"}}"
           mysql_ifaces="0.0.0.0:6032"
           refresh_interval=2000
           admin-hash_passwords=false
@@ -311,10 +383,10 @@ lb:
         mysql_servers =
         (
           { address="{{ v "mysql-master-host"}}", port=3306, hostgroup=0, max_connections=1000, max_replication_lag = 5 },
-          { address="{{ v "mysql-slave-host"}}", port=3306, hostgroup=1, max_connections=1000, max_replication_lag = 5 }
+          { address="{{ v "mysql-slave1-host"}}", port=3306, hostgroup=1, max_connections=1000, max_replication_lag = 5 },
+          { address="{{ v "mysql-slave2-host"}}", port=3306, hostgroup=1, max_connections=1000, max_replication_lag = 5 }
         )
 
-        # MySQL へ Proxy 経由で接続するユーザ記載
         mysql_users =
         (
           { username = "root", password = "{{ v "mpassword" }}",   default_hostgroup = 0, max_connections=1000, active = 1 }
@@ -349,16 +421,6 @@ lb:
       mode: 644
 
 promethues-mysql-master-exporter: 
-  defines: runnable
-  nodes:
-    mysql-promethues-expoter-master-node:
-      provider: aws
-      tag: mysql-master
-      instance-type: t3.xlarge
-      region: eu-north-1
-      disk-size: 60
-  affinity:
-    name: mysql-promethues-expoter-master-node
   variables:
     database_name:
       type: string
@@ -376,17 +438,8 @@ promethues-mysql-master-exporter:
     mysql-master-prom-exporter:
       image: prom/mysqld-exporter
 
-promethues-mysql-slave-exporter: 
+promethues-mysql-slave1-exporter: 
   defines: runnable
-  nodes:
-    mysql-promethues-expoter-slave-node:
-      provider: aws
-      tag: mysql-master
-      instance-type: t3.xlarge
-      region: eu-north-1
-      disk-size: 60
-  affinity:
-    name: mysql-promethues-expoter-slave-node
   variables:
     database_name:
       type: string
@@ -395,7 +448,26 @@ promethues-mysql-slave-exporter:
     mysql-slave-host:
       env: MYSQL_SLAVE_HOST
       type: string
-      value: <- get-hostname("monk-mysql-proxysql/slave", "mysql-slave") split(".dns.podman") join("")
+      value: <- get-hostname("monk-mysql-proxysql/slave1", "mysql-slave-1") split(".dns.podman") join("")
+    mysql_master_data_source:
+      type: string
+      env: DATA_SOURCE_NAME
+      value: <- `root:${mysql_database_root_password}@(${mysql-slave-host}:3306)/${mysql_database_name}`
+  containers:
+    mysql-slave-prom-exporter:
+      image: prom/mysqld-exporter
+
+promethues-mysql-slave2-exporter: 
+  defines: runnable
+  variables:
+    database_name:
+      type: string
+      env: MYSQL_DATABASE
+      value: <- $mysql_database_name
+    mysql-slave-host:
+      env: MYSQL_SLAVE_HOST
+      type: string
+      value: <- get-hostname("monk-mysql-proxysql/slave2", "mysql-slave-2") split(".dns.podman") join("")
     mysql_master_data_source:
       type: string
       env: DATA_SOURCE_NAME
@@ -406,22 +478,16 @@ promethues-mysql-slave-exporter:
 
 promethues: 
   defines: runnable
-  nodes:
-    mysql-promethues:
-      provider: aws
-      tag: mysql-promethues
-      instance-type: t3.xlarge
-      region: eu-north-1
-      disk-size: 60
-  affinity:
-    name: mysql-promethues
   variables:
     mysql-exporter-master:
       type: string
       value: <- get-hostname("monk-mysql-proxysql/promethues-mysql-master-exporter", "mysql-master-prom-exporter") split(".dns.podman") join("")
-    mysql-exporter-slave:
+    mysql-exporter-slave1:
       type: string
-      value: <- get-hostname("monk-mysql-proxysql/promethues-mysql-slave-exporter", "mysql-slave-prom-exporter") split(".dns.podman") join("")
+      value: <- get-hostname("monk-mysql-proxysql/promethues-mysql-slave1-exporter", "mysql-slave-prom-exporter") split(".dns.podman") join("")
+    mysql-exporter-slave2:
+      type: string
+      value: <- get-hostname("monk-mysql-proxysql/promethues-mysql-slave2-exporter", "mysql-slave-prom-exporter") split(".dns.podman") join("")
   containers:
     mysql-promethues:
       image: prom/prometheus
@@ -458,15 +524,6 @@ promethues:
 
 grafana: 
   defines: runnable
-  nodes:
-    mysql-grafana:
-      provider: aws
-      tag: mysql-grafana
-      instance-type: t3.xlarge
-      region: eu-north-1
-      disk-size: 60
-  affinity:
-    name: mysql-grafana
   containers:
     mysql-grafana:
       image: grafana/grafana

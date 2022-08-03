@@ -1,26 +1,28 @@
-namespace: monk-mysql-proxysql
+namespace: monk-mysql-master-slave-proxysql
 
 stack:
   defines: process-group
   runnable-list:
-    - monk-mysql-proxysql/master
-    - monk-mysql-proxysql/slave
-    - monk-mysql-proxysql/lb
-    - monk-mysql-proxysql/configure
-    - monk-mysql-proxysql/promethues-mysql-master-exporter
-    - monk-mysql-proxysql/promethues-mysql-slave-exporter
-    - monk-mysql-proxysql/promethues
-    - monk-mysql-proxysql/grafana
+    - monk-mysql-master-slave-proxysql/master
+    - monk-mysql-master-slave-proxysql/slave1
+    - monk-mysql-master-slave-proxysql/slave2
+    - monk-mysql-master-slave-proxysql/lb
+    - monk-mysql-master-slave-proxysql/configure
+    - monk-mysql-master-slave-proxysql/grafana
   variables:
-    mysql_database_user: "db_user"
-    mysql_database_root_password: "RhgDPXPEnAgJ5q5g"
+    mysql_database_repl_user: "repl"
+    mysql_database_repl_password: "RhgDPXPEnAgJ5q5g"
     mysql_database_monitor_user: "monitor"
     mysql_database_monitor_password: "RhgDPXPEnAgJ5q5g"
-    mysql_database_name: "wpdb"
-    mysql_replication_user: repl1
-    mysql_database_password: 
-      type: string
-      value: "RhgDPXPEnAgxxXYZ"
-    server_name: wordpress.burakhan.com
-    email: burakhan@burakhan.com
-    image_tag: latest
+    mysql_database_user: "db_user"
+    mysql_database_root_password: "RhgDPXPEnAgJ5q5g"
+    mysql_database_name: "monk"
+    mysql_master_database_port: 3306
+    mysql_slave1_database_port: 3307
+    mysql_slave2_database_port: 3308
+    mysql_database_password: "RhgDPXPEnAgxxXYZ"
+    mysql_image_tag: 5.6.47
+    mysql_database_data_volume_path: /mnt/mysql
+    mysql_database_data_volume_size: 60
+    proxysql_admin_username: admin
+    proxysql_admin_password: admin

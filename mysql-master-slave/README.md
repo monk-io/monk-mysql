@@ -42,7 +42,7 @@ group     monk-mysql-master-slave/stack      local       -        -
 
 ## Deploy Stack
 ```bash
-foo@bar:~$ monk run monk-mysql-master-slave/stack                                                                                ✔  10s   00:11:51 
+foo@bar:~$ monk run monk-mysql-master-slave/stack                                                                               
 ? Select tag to run [local/monk-mysql-master-slave/stack] on: mysql
 ✔ Starting the job: local/monk-mysql-master-slave/stack... DONE
 ✔ Preparing nodes DONE
