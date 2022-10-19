@@ -28,15 +28,10 @@ master:
     volume_data:
         type: string
         value: <- $mysql_database_data_volume_path
-  volumes:
-    important-data:
-        size: <- $mysql_database_data_volume_size
-        kind: SSD
-        path: <- $volume_data
   containers:
     mysql-master:
       paths:
-        - <- `${volume_data}/mysql:/var/lib/mysql`
+        - <- `${volume_data}/mysql-master:/var/lib/mysql`
       ports:
         - <- `0.0.0.0:${mysql_port}:3306`
       image-tag: <- `${image_tag}`
@@ -88,18 +83,13 @@ slave1:
     slave1-volume_data:
         type: string
         value: <- $mysql_database_data_volume_path
-  volumes:
-    slave1-important-data:
-        size: <- $mysql_database_data_volume_size
-        kind: SSD
-        path: <- $slave1-volume_data
   containers:
     mysql-slave-1:
       ports:
         - <- `0.0.0.0:${mysql_slave1_database_port}:3306`
       image-tag: <- `${image_tag}`
       paths:
-        - <- `${slave1-volume_data}/mysql:/var/lib/mysql`
+        - <- `${slave1-volume_data}/mysql-slave1:/var/lib/mysql`
       image: mysql
   files:
     defines: files
@@ -150,18 +140,13 @@ slave2:
     slave2-volume_data:
         type: string
         value: <- $mysql_database_data_volume_path
-  volumes:
-    slave2-important-data:
-        size: <- $mysql_database_data_volume_size
-        kind: SSD
-        path: <- $slave2-volume_data
   containers:
     mysql-slave-2:
       ports:
         - <- `0.0.0.0:${mysql_slave2_database_port}:3306`
       image-tag: <- `${image_tag}`
       paths:
-        - <- `${slave2-volume_data}/mysql:/var/lib/mysql`
+        - <- `${slave2-volume_data}/mysql-slave2:/var/lib/mysql`
       image: mysql
   files:
     defines: files
@@ -232,7 +217,7 @@ configure:
       type: string
   containers:
     mysql-configure:
-      bash: /tmp/init.sh
+      bash: sleep 3600 #/tmp/init.sh
       image-tag: <- `${image_tag}`
       image: mysql
   files:
@@ -251,20 +236,20 @@ configure:
 
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "UNLOCK TABLES;"
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "ALTER USER 'root'@'%' IDENTIFIED WITH mysql_native_password BY '$MYSQL_ROOT_PASSWORD';"
-        mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "CREATE USER '$MYSQL_MONITOR_USER'@'%' IDENTIFIED BY '$MYSQL_MONITOR_PASSWORD';"
+        mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "CREATE USER IF NOT '$MYSQL_MONITOR_USER'@'%' IDENTIFIED BY '$MYSQL_MONITOR_PASSWORD';"
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "FLUSH PRIVILEGES;"
 
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE1_HOST -e "UNLOCK TABLES;"
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE1_HOST -e "ALTER USER 'root'@'%' IDENTIFIED WITH mysql_native_password BY '$MYSQL_ROOT_PASSWORD';"
-        mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE1_HOST -e "CREATE USER '$MYSQL_MONITOR_USER'@'%' IDENTIFIED BY '$MYSQL_MONITOR_PASSWORD';"
+        mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE1_HOST -e "CREATE USER IF NOT '$MYSQL_MONITOR_USER'@'%' IDENTIFIED BY '$MYSQL_MONITOR_PASSWORD';"
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE1_HOST -e "FLUSH PRIVILEGES;"
 
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE2_HOST -e "UNLOCK TABLES;"
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE2_HOST -e "ALTER USER 'root'@'%' IDENTIFIED WITH mysql_native_password BY '$MYSQL_ROOT_PASSWORD';"
-        mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE2_HOST -e "CREATE USER '$MYSQL_MONITOR_USER'@'%' IDENTIFIED BY '$MYSQL_MONITOR_PASSWORD';"
+        mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE2_HOST -e "CREATE USER IF NOT '$MYSQL_MONITOR_USER'@'%' IDENTIFIED BY '$MYSQL_MONITOR_PASSWORD';"
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE2_HOST -e "FLUSH PRIVILEGES;"
 
-        mysqldump -uroot -h $MYSQL_MASTER_HOST  -p$MYSQL_ROOT_PASSWORD --all-databases --source-data --single-transaction --flush-logs --events --result-file=/tmp/master_dump.sql
+        mysqldump -uroot -h $MYSQL_MASTER_HOST  -p$MYSQL_ROOT_PASSWORD --all-databases --single-transaction --flush-logs --events --result-file=/tmp/master_dump.sql
 
         mysql -h $MYSQL_SLAVE1_HOST -u root -p$MYSQL_ROOT_PASSWORD -e "STOP SLAVE;";
         mysql -h $MYSQL_SLAVE1_HOST -u root -p$MYSQL_ROOT_PASSWORD < /tmp/master_dump.sql

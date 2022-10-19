@@ -1,5 +1,6 @@
 namespace: monk-mysql-master-slave
 
+
 master: 
   defines: runnable
   variables:
@@ -28,15 +29,10 @@ master:
     volume_data:
         type: string
         value: <- $mysql_database_data_volume_path
-  volumes:
-    important-data:
-        size: <- $mysql_database_data_volume_size
-        kind: SSD
-        path: <- $volume_data
   containers:
     mysql-master:
       paths:
-        - <- `${volume_data}/mysql:/var/lib/mysql`
+        - <- `${volume_data}/mysql-master:/var/lib/mysql`
       ports:
         - <- `0.0.0.0:${mysql_port}:3306`
       image-tag: <- `${image_tag}`
@@ -88,18 +84,13 @@ slave1:
     slave1-volume_data:
         type: string
         value: <- $mysql_database_data_volume_path
-  volumes:
-    slave1-important-data:
-        size: <- $mysql_database_data_volume_size
-        kind: SSD
-        path: <- $slave1-volume_data
   containers:
     mysql-slave-1:
       ports:
         - <- `0.0.0.0:${mysql_slave1_database_port}:3306`
       image-tag: <- `${image_tag}`
       paths:
-        - <- `${slave1-volume_data}/mysql:/var/lib/mysql`
+        - <- `${slave1-volume_data}/mysql-slave1:/var/lib/mysql`
       image: mysql
   files:
     defines: files
@@ -150,18 +141,13 @@ slave2:
     slave2-volume_data:
         type: string
         value: <- $mysql_database_data_volume_path
-  volumes:
-    slave2-important-data:
-        size: <- $mysql_database_data_volume_size
-        kind: SSD
-        path: <- $slave2-volume_data
   containers:
     mysql-slave-2:
       ports:
         - <- `0.0.0.0:${mysql_slave2_database_port}:3306`
       image-tag: <- `${image_tag}`
       paths:
-        - <- `${slave2-volume_data}/mysql:/var/lib/mysql`
+        - <- `${slave2-volume_data}/mysql-slave2:/var/lib/mysql`
       image: mysql
   files:
     defines: files

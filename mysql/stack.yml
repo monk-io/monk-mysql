@@ -4,12 +4,28 @@ stack:
   runnable-list:
     -  monk-mysql/db
   variables:
-    mysql_database_user: "db_user"
-    mysql_database_root_password: "RhgDPXPEnAgJ5q5g"
-    mysql_database_name: "monk"
-    mysql_database_port: 3306
-    mysql_database_password: "RhgDPXPEnAgxxXYZ"
-    mysql_image_tag: 5.6.47
-    mysql_database_data_volume_path: /mnt/mysql
-    mysql_database_data_volume_size: 60
+    mysql_database_user: 
+      value: "db_user"
+      type: string
+    mysql_database_root_password: 
+      value: "RhgDPXPEnAgJ5q5g"
+      type:  string
+    mysql_database_name: 
+      value: "monk"
+      type: string
+    mysql_database_port: 
+      value: 3306
+      type: int
+    mysql_database_password: 
+      value: "RhgDPXPEnAgxxXYZ"
+      type: string
+    mysql_image_tag: 
+      value: "5.6.47"
+      type: string
+    mysql_database_data_volume_path: 
+      value: <- `${moncc-volume-path}/mysql`
+      type: string
+    mysql_database_data_volume_size: 
+      value: 60
+      type: int
     

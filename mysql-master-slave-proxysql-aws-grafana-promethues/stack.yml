@@ -9,6 +9,10 @@ stack:
     - monk-mysql-master-slave-proxysql/lb
     - monk-mysql-master-slave-proxysql/configure
     - monk-mysql-master-slave-proxysql/grafana
+    - monk-mysql-master-slave-proxysql/promethues
+    - monk-mysql-master-slave-proxysql/promethues-mysql-slave1-exporter
+    - monk-mysql-master-slave-proxysql/promethues-mysql-slave2-exporter
+    - monk-mysql-master-slave-proxysql/promethues-mysql-master-exporter
   variables:
     mysql_database_repl_user: "repl"
     mysql_database_repl_password: "RhgDPXPEnAgJ5q5g"
