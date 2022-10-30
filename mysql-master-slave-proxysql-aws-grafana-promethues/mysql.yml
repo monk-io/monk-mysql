@@ -420,7 +420,8 @@ lb:
       path: /etc/proxysql.cnf
       mode: 644
 
-promethues-mysql-master-exporter: 
+promethues-mysql-master-exporter:
+  defines: runnable
   variables:
     database_name:
       type: string
