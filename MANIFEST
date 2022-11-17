@@ -1,0 +1,2 @@
+REPO monk-mysql
+DIR mysql mysql-master-slave mysql-master-slave-proxysql mysql-master-slave-proxysql-aws mysql-master-slave-proxysql-aws-grafana-promethues

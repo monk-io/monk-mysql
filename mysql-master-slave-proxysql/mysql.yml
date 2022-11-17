@@ -1,5 +1,4 @@
-namespace: monk-mysql-master-slave-proxysql
-
+namespace: monk-mysql-proxysql
 master: 
   defines: runnable
   variables:
@@ -198,15 +197,15 @@ configure:
     database_master_host:
       env: MYSQL_MASTER_HOST
       type: string
-      value: <- get-hostname("monk-mysql-master-slave-proxysql/master", "mysql-master") split(".dns.podman") join("")
+      value: <- get-hostname("monk-mysql-proxysql/master", "mysql-master") split(".dns.podman") join("")
     database_slave1_host:
       env: MYSQL_SLAVE1_HOST
       type: string
-      value: <- get-hostname("monk-mysql-master-slave-proxysql/slave1", "mysql-slave-1") split(".dns.podman") join("")
+      value: <- get-hostname("monk-mysql-proxysql/slave1", "mysql-slave-1") split(".dns.podman") join("")
     mysql-slave2-host:
       env: MYSQL_SLAVE2_HOST
       type: string
-      value: <- get-hostname("monk-mysql-master-slave-proxysql/slave2", "mysql-slave-2") split(".dns.podman") join("")
+      value: <- get-hostname("monk-mysql-proxysql/slave2", "mysql-slave-2") split(".dns.podman") join("")
     database_monitor_password:
       env: MYSQL_MONITOR_PASSWORD
       value: <- $mysql_database_monitor_password
@@ -273,9 +272,9 @@ configure:
   depends:
     wait-for:
         runnables:
-            - monk-mysql-master-slave-proxysql/master
-            - monk-mysql-master-slave-proxysql/slave1
-            - monk-mysql-master-slave-proxysql/slave2
+            - monk-mysql-proxysql/master
+            - monk-mysql-proxysql/slave1
+            - monk-mysql-proxysql/slave2
         timeout: 60
 
 
@@ -285,19 +284,19 @@ lb:
     mysql-master-host:
       env: MYSQL_MASTER_HOST
       type: string
-      value: <- get-hostname("monk-mysql-master-slave-proxysql/master", "mysql-master") split(".dns.podman") join("")
+      value: <- get-hostname("monk-mysql-proxysql/master", "mysql-master") split(".dns.podman") join("")
     mysql-slave1-host: 
       env: MYSQL_SLAVE1_HOST
       type: string
-      value: <- get-hostname("monk-mysql-master-slave-proxysql/slave1", "mysql-slave-1") split(".dns.podman") join("")
+      value: <- get-hostname("monk-mysql-proxysql/slave1", "mysql-slave-1") split(".dns.podman") join("")
     mysql-slave2-host: 
       env: MYSQL_SLAVE2_HOST
       type: string
-      value: <- get-hostname("monk-mysql-master-slave-proxysql/slave2", "mysql-slave-2") split(".dns.podman") join("")
+      value: <- get-hostname("monk-mysql-proxysql/slave2", "mysql-slave-2") split(".dns.podman") join("")
     my-hostname:
       env: MYSQL_PROXY_HOST
       type: string
-      value: <- get-hostname("monk-mysql-master-slave-proxysql/lb", "monk-proxysql") split(".dns.podman") join("")
+      value: <- get-hostname("monk-mysql-proxysql/lb", "monk-proxysql") split(".dns.podman") join("")
     mpassword:
       env: MYSQL_ROOT_PASSWORD
       type: string
