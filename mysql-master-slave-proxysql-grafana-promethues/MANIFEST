@@ -1,0 +1,2 @@
+REPO monk-mysql-proxysql-monitor
+LOAD mysql.yml stack.yml 

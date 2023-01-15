@@ -1,2 +1,0 @@
-REPO mysql
-LOAD mysql.yml stack.yml 

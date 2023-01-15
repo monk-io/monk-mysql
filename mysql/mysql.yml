@@ -36,3 +36,9 @@ db:
         - <- `0.0.0.0:${mysql_port}:3306`
       image-tag: <- `${image_tag}`
       image: docker.io/library/mysql
+  services:
+    monk-mysql-db:
+      container: monk-mysql-db
+      port: <- `${mysql_port}`
+      protocol: tcp
+      host-port: <- `${mysql_port}`

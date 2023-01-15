@@ -1,18 +1,18 @@
-namespace: monk-mysql-master-slave-proxysql
+namespace: monk-mysql-proxysql-monitor
 
 stack:
   defines: process-group
   runnable-list:
-    - monk-mysql-master-slave-proxysql/master
-    - monk-mysql-master-slave-proxysql/slave1
-    - monk-mysql-master-slave-proxysql/slave2
-    - monk-mysql-master-slave-proxysql/lb
-    - monk-mysql-master-slave-proxysql/configure
-    - monk-mysql-master-slave-proxysql/grafana
-    - monk-mysql-master-slave-proxysql/promethues
-    - monk-mysql-master-slave-proxysql/promethues-mysql-slave1-exporter
-    - monk-mysql-master-slave-proxysql/promethues-mysql-slave2-exporter
-    - monk-mysql-master-slave-proxysql/promethues-mysql-master-exporter
+    - monk-mysql-proxysql-monitor/master
+    - monk-mysql-proxysql-monitor/slave1
+    - monk-mysql-proxysql-monitor/slave2
+    - monk-mysql-proxysql-monitor/lb
+    - monk-mysql-proxysql-monitor/configure
+    - monk-mysql-proxysql-monitor/grafana
+    - monk-mysql-proxysql-monitor/promethues
+    - monk-mysql-proxysql-monitor/promethues-mysql-slave1-exporter
+    - monk-mysql-proxysql-monitor/promethues-mysql-slave2-exporter
+    - monk-mysql-proxysql-monitor/promethues-mysql-master-exporter
     
   variables:
     mysql_database_repl_user: "repl"
@@ -26,7 +26,9 @@ stack:
     mysql_slave1_database_port: 3307
     mysql_slave2_database_port: 3308
     mysql_database_password: "RhgDPXPEnAgxxXYZ"
-    mysql_image_tag: 5.6.47
+    mysql_image_tag: 
+      value: 8.0
+      type: string
     mysql_database_data_volume_path: /mnt/mysql
     mysql_database_data_volume_size: 60
     proxysql_admin_username: admin

@@ -35,7 +35,7 @@ stack:
     mysql_slave2_database_port: 3308
     mysql_database_password: "RhgDPXPEnAgxxXYZ"
     mysql_image_tag: 
-      value: "5.6.47"
+      value: "8.0"
       type: string
     mysql_database_data_volume_path: 
       value: <- `${moncc-volume-path}`
