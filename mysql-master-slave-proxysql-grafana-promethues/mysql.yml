@@ -11,6 +11,7 @@ mysql-common:
     slave2:
       runnable: monk-mysql-proxysql-monitor/slave2
       service: mysql-svc
+
   variables:
     image_tag:
       type: string
@@ -23,7 +24,7 @@ mysql-common:
       env: MYSQL_USER
       type: string
       value: <- $mysql_database_user
-    database_password: 
+    database_password:
       env: MYSQL_PASSWORD
       type: string
       value: <- $mysql_database_password
@@ -46,20 +47,22 @@ mysql-common:
     volume_data:
       type: string
       value: <- `${monk-volume-path}`
+
   services:
     mysql-svc:
       port: 3306
       container: mysql
       protocol: tcp
 
-
-master: 
+master:
   defines: runnable
   inherits: monk-mysql-proxysql-monitor/mysql-common
+
   variables:
     mysql_port:
       type: int
       value: <- $mysql_master_database_port
+
   containers:
     mysql:
       paths:
@@ -68,8 +71,8 @@ master:
         - <- `${mysql_port}:3306`
       image-tag: <- `${image_tag}`
       image: mysql
+
   files:
-    defines: files
     my-file:
       raw: true
       contents: |
@@ -87,10 +90,10 @@ master:
       path: /etc/mysql/conf.d/master.cnf
       mode: 644
 
-
-slave1: 
+slave1:
   defines: runnable
   inherits: monk-mysql-proxysql-monitor/mysql-common
+
   variables:
     mysql_port:
       type: int
@@ -98,6 +101,7 @@ slave1:
     slave1-volume_data:
         type: string
         value: <- $volume_data
+
   containers:
     mysql:
       ports:
@@ -106,8 +110,8 @@ slave1:
       paths:
         - <- `${slave1-volume_data}/mysql-slave1:/var/lib/mysql`
       image: mysql
+
   files:
-    defines: files
     my-file:
       raw: true
       contents: |
@@ -127,9 +131,10 @@ slave1:
       path: /etc/mysql/conf.d/slave1.cnf
       mode: 644
 
-slave2: 
+slave2:
   defines: runnable
   inherits: monk-mysql-proxysql-monitor/mysql-common
+
   variables:
     mysql_port:
       type: int
@@ -137,6 +142,7 @@ slave2:
     slave2-volume_data:
         type: string
         value: <- $volume_data
+
   containers:
     mysql:
       ports:
@@ -145,8 +151,8 @@ slave2:
       paths:
         - <- `${slave2-volume_data}/mysql-slave2:/var/lib/mysql`
       image: mysql
+
   files:
-    defines: files
     my-file:
       raw: true
       contents: |
@@ -166,15 +172,16 @@ slave2:
       path: /etc/mysql/conf.d/slave2.cnf
       mode: 644
 
-configure: 
+configure:
   defines: runnable
   inherits: monk-mysql-proxysql-monitor/mysql-common
+
   variables:
     mysql_master_password:
       env: MYSQL_MASTER_PASSWORD
       type: string
       value: <- $mysql_database_root_password
-    mysql_repl_user: 
+    mysql_repl_user:
       env: MYSQL_REPLICATION_USER
       type: string
       value: <- $mysql_database_repl_user
@@ -190,13 +197,14 @@ configure:
       env: MYSQL_MONITOR_USER
       value: <- $mysql_database_monitor_user
       type: string
+
   containers:
     mysql:
       bash: /tmp/init.sh
       image-tag: <- `${image_tag}`
       image: mysql
+
   files:
-    defines: files
     my-file:
       raw: true
       contents: |
@@ -213,13 +221,12 @@ configure:
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "ALTER USER 'root'@'%' IDENTIFIED WITH mysql_native_password BY '$MYSQL_ROOT_PASSWORD';"
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "CREATE USER '$MYSQL_MONITOR_USER'@'%' IDENTIFIED BY '$MYSQL_MONITOR_PASSWORD';"
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "FLUSH PRIVILEGES;"
-        
+
         mysqldump -uroot -h $MYSQL_MASTER_HOST  -p$MYSQL_ROOT_PASSWORD --all-databases --source-data --single-transaction --flush-logs --events --result-file=/tmp/master_dump.sql
 
         mysql -h $MYSQL_SLAVE1_HOST -u root -p$MYSQL_ROOT_PASSWORD -e "STOP SLAVE;";
         mysql -h $MYSQL_SLAVE1_HOST -u root -p$MYSQL_ROOT_PASSWORD < /tmp/master_dump.sql
         mysql -h $MYSQL_SLAVE1_HOST -u root -p$MYSQL_ROOT_PASSWORD -e "FLUSH PRIVILEGES;";
-
 
         mysql -h $MYSQL_SLAVE2_HOST -u root -p$MYSQL_ROOT_PASSWORD -e "STOP SLAVE;";
         mysql -h $MYSQL_SLAVE2_HOST -u root -p$MYSQL_ROOT_PASSWORD < /tmp/master_dump.sql
@@ -239,16 +246,16 @@ configure:
       container: mysql
       path: /tmp/init.sh
       mode: 755
+
   depends:
     wait-for:
-        runnables:
-            - monk-mysql-proxysql-monitor/master
-            - monk-mysql-proxysql-monitor/slave1
-            - monk-mysql-proxysql-monitor/slave2
-        timeout: 60
+      runnables:
+        - monk-mysql-proxysql-monitor/master
+        - monk-mysql-proxysql-monitor/slave1
+        - monk-mysql-proxysql-monitor/slave2
+      timeout: 60
 
-
-lb: 
+lb:
   defines: runnable
 
   connections:
@@ -261,16 +268,17 @@ lb:
     slave2:
       runnable: monk-mysql-proxysql-monitor/slave2
       service: mysql-svc
+
   variables:
     mysql-master-host:
       env: MYSQL_MASTER_HOST
       type: string
       value: <- connection-hostname("master") split(".dns.podman") join("")
-    mysql-slave1-host: 
+    mysql-slave1-host:
       env: MYSQL_SLAVE1_HOST
       type: string
       value: <- connection-hostname("slave1") split(".dns.podman") join("")
-    mysql-slave2-host: 
+    mysql-slave2-host:
       env: MYSQL_SLAVE2_HOST
       type: string
       value: <- connection-hostname("slave2") split(".dns.podman") join("")
@@ -289,6 +297,7 @@ lb:
     proxysql_data:
       type: string
       value: proxysql-data
+
   containers:
     monk-proxysql:
       ports:
@@ -296,6 +305,7 @@ lb:
         - <- `6033:6033`
         - <- `6080:6080`
       image: severalnines/proxysql
+
   files:
     my-file:
       contents: |
@@ -384,6 +394,7 @@ lb:
       container: monk-proxysql
       path: /etc/proxysql.cnf
       mode: 644
+
   services:
     mysql-lb-svc:
       port: 3305
@@ -392,10 +403,12 @@ lb:
 
 promethues-mysql-master-exporter:
   defines: runnable
+
   connections:
     master:
       runnable: monk-mysql-proxysql-monitor/master
       service: mysql-svc
+
   variables:
     database_name:
       type: string
@@ -409,21 +422,25 @@ promethues-mysql-master-exporter:
       type: string
       env: DATA_SOURCE_NAME
       value: <- `root:${mysql_database_root_password}@(${mysql-master-host}:3306)/${mysql_database_name}`
+
   containers:
     mysql-master-prom-exporter:
       image: prom/mysqld-exporter
+
   services:
     mysql-master-exporter-svc:
       port: 9104
       container: mysql-master-prom-exporter
       protocol: tcp
 
-promethues-mysql-slave1-exporter: 
+promethues-mysql-slave1-exporter:
   defines: runnable
+
   connections:
     slave1:
       runnable: monk-mysql-proxysql-monitor/slave1
       service: mysql-svc
+
   variables:
     database_name:
       type: string
@@ -437,21 +454,25 @@ promethues-mysql-slave1-exporter:
       type: string
       env: DATA_SOURCE_NAME
       value: <- `root:${mysql_database_root_password}@(${mysql-slave-host}:3306)/${mysql_database_name}`
+
   containers:
     mysql-slave-prom-exporter:
       image: prom/mysqld-exporter
+
   services:
     mysql-slave-exporter-svc:
       port: 9104
       container: mysql-slave-prom-exporter
       protocol: tcp
 
-promethues-mysql-slave2-exporter: 
+promethues-mysql-slave2-exporter:
   defines: runnable
+
   connections:
     slave2:
       runnable: monk-mysql-proxysql-monitor/slave2
       service: mysql-svc
+
   variables:
     database_name:
       type: string
@@ -465,18 +486,20 @@ promethues-mysql-slave2-exporter:
       type: string
       env: DATA_SOURCE_NAME
       value: <- `root:${mysql_database_root_password}@(${mysql-slave-host}:3306)/${mysql_database_name}`
+
   containers:
     mysql-slave-prom-exporter:
       image: prom/mysqld-exporter
+
   services:
     mysql-slave-exporter-svc:
       port: 9104
       container: mysql-slave-prom-exporter
       protocol: tcp
-  
 
-promethues: 
+promethues:
   defines: runnable
+
   connections:
     master:
       runnable: monk-mysql-proxysql-monitor/promethues-mysql-master-exporter
@@ -487,6 +510,7 @@ promethues:
     slave2:
       runnable: monk-mysql-proxysql-monitor/promethues-mysql-slave2-exporter
       service: mysql-slave-exporter-svc
+
   variables:
     mysql-exporter-master:
       type: string
@@ -497,18 +521,20 @@ promethues:
     mysql-exporter-slave2:
       type: string
       value: <- connection-hostname("slave2") split(".dns.podman") join("")
+
   containers:
     mysql-promethues:
       image: prom/prometheus
       ports:
         - 9090:9090
+
   services:
     promethues-svc:
       port: 9090
       container: mysql-promethues
       protocol: tcp
+
   files:
-    defines: files
     my-file:
       contents: |
         global:
@@ -537,7 +563,7 @@ promethues:
       path: /etc/prometheus/prometheus.yml
       mode: 644
 
-grafana: 
+grafana:
   defines: runnable
   containers:
     mysql-grafana:

@@ -11,6 +11,7 @@ mysql-common:
     slave2:
       runnable: monk-mysql-master-slave/slave2
       service: mysql-svc
+
   variables:
     image_tag:
       type: string
@@ -23,7 +24,7 @@ mysql-common:
       env: MYSQL_USER
       type: string
       value: <- $mysql_database_user
-    database_password: 
+    database_password:
       env: MYSQL_PASSWORD
       type: string
       value: <- $mysql_database_password
@@ -46,20 +47,22 @@ mysql-common:
     volume_data:
       type: string
       value: <- `${monk-volume-path}`
+
   services:
     mysql-svc:
       port: 3306
       container: mysql
       protocol: tcp
 
-
-master: 
+master:
   defines: runnable
   inherits: monk-mysql-master-slave/mysql-common
+
   variables:
     mysql_port:
       type: int
       value: <- $mysql_master_database_port
+
   containers:
     mysql:
       paths:
@@ -68,8 +71,8 @@ master:
         - <- `${mysql_port}:3306`
       image-tag: <- `${image_tag}`
       image: mysql
+
   files:
-    defines: files
     my-file:
       raw: true
       contents: |
@@ -87,10 +90,10 @@ master:
       path: /etc/mysql/conf.d/master.cnf
       mode: 644
 
-
-slave1: 
+slave1:
   defines: runnable
   inherits: monk-mysql-master-slave/mysql-common
+
   variables:
     mysql_port:
       type: int
@@ -98,6 +101,7 @@ slave1:
     slave1-volume_data:
         type: string
         value: <- $mysql_database_data_volume_path
+
   containers:
     mysql:
       ports:
@@ -106,8 +110,8 @@ slave1:
       paths:
         - <- `${slave1-volume_data}/mysql-slave1:/var/lib/mysql`
       image: mysql
+
   files:
-    defines: files
     my-file:
       raw: true
       contents: |
@@ -127,9 +131,10 @@ slave1:
       path: /etc/mysql/conf.d/slave1.cnf
       mode: 644
 
-slave2: 
+slave2:
   defines: runnable
   inherits: monk-mysql-master-slave/mysql-common
+
   variables:
     mysql_port:
       type: int
@@ -137,6 +142,7 @@ slave2:
     slave2-volume_data:
         type: string
         value: <- $mysql_database_data_volume_path
+
   containers:
     mysql:
       ports:
@@ -145,8 +151,8 @@ slave2:
       paths:
         - <- `${slave2-volume_data}/mysql-slave2:/var/lib/mysql`
       image: mysql
+
   files:
-    defines: files
     my-file:
       raw: true
       contents: |
@@ -166,15 +172,16 @@ slave2:
       path: /etc/mysql/conf.d/slave2.cnf
       mode: 644
 
-configure: 
+configure:
   defines: runnable
   inherits: monk-mysql-master-slave/mysql-common
+
   variables:
     mysql_master_password:
       env: MYSQL_MASTER_PASSWORD
       type: string
       value: <- $mysql_database_root_password
-    mysql_repl_user: 
+    mysql_repl_user:
       env: MYSQL_REPLICATION_USER
       type: string
       value: <- $mysql_database_repl_user
@@ -190,13 +197,14 @@ configure:
       env: MYSQL_MONITOR_USER
       value: <- $mysql_database_monitor_user
       type: string
+
   containers:
     mysql:
       bash: /tmp/init.sh
       image-tag: <- `${image_tag}`
       image: mysql
+
   files:
-    defines: files
     my-file:
       raw: true
       contents: |
@@ -213,7 +221,7 @@ configure:
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "ALTER USER 'root'@'%' IDENTIFIED WITH mysql_native_password BY '$MYSQL_ROOT_PASSWORD';"
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "CREATE USER '$MYSQL_MONITOR_USER'@'%' IDENTIFIED BY '$MYSQL_MONITOR_PASSWORD';"
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "FLUSH PRIVILEGES;"
-        
+
         mysqldump -uroot -h $MYSQL_MASTER_HOST  -p$MYSQL_ROOT_PASSWORD --all-databases --source-data --single-transaction --flush-logs --events --result-file=/tmp/master_dump.sql
 
         mysql -h $MYSQL_SLAVE1_HOST -u root -p$MYSQL_ROOT_PASSWORD -e "STOP SLAVE;";
@@ -236,6 +244,7 @@ configure:
       container: mysql
       path: /tmp/init.sh
       mode: 755
+
   depends:
     wait-for:
         runnables:

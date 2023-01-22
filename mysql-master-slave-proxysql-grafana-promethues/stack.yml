@@ -2,6 +2,7 @@ namespace: monk-mysql-proxysql-monitor
 
 stack:
   defines: process-group
+
   runnable-list:
     - monk-mysql-proxysql-monitor/master
     - monk-mysql-proxysql-monitor/slave1
@@ -13,7 +14,7 @@ stack:
     - monk-mysql-proxysql-monitor/promethues-mysql-slave1-exporter
     - monk-mysql-proxysql-monitor/promethues-mysql-slave2-exporter
     - monk-mysql-proxysql-monitor/promethues-mysql-master-exporter
-    
+
   variables:
     mysql_database_repl_user: "repl"
     mysql_database_repl_password: "RhgDPXPEnAgJ5q5g"
@@ -26,7 +27,7 @@ stack:
     mysql_slave1_database_port: 3307
     mysql_slave2_database_port: 3308
     mysql_database_password: "RhgDPXPEnAgxxXYZ"
-    mysql_image_tag: 
+    mysql_image_tag:
       value: 8.0
       type: string
     mysql_database_data_volume_path: /mnt/mysql
