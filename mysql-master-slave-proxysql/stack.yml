@@ -2,42 +2,44 @@ namespace: monk-mysql-proxysql
 
 stack:
   defines: process-group
+
   runnable-list:
     - monk-mysql-proxysql/master
     - monk-mysql-proxysql/slave1
     - monk-mysql-proxysql/slave2
     - monk-mysql-proxysql/lb
     - monk-mysql-proxysql/configure
+
   variables:
-    mysql_database_repl_user: 
+    mysql_database_repl_user:
       value: "repl"
       type: string
-    mysql_database_repl_password: 
+    mysql_database_repl_password:
       value: "RhgDPXPEnAgJ5q5g"
       type: string
     mysql_database_monitor_user:
       value: "monitor"
       type: string
-    mysql_database_monitor_password: 
+    mysql_database_monitor_password:
       value: "RhgDPXPEnAgJ5q5g"
       type: string
-    mysql_database_user: 
+    mysql_database_user:
       value: "db_user"
       type: string
-    mysql_database_root_password: 
+    mysql_database_root_password:
       value: "RhgDPXPEnAgJ5q5g"
       type: string
-    mysql_database_name: 
+    mysql_database_name:
       value: "monk"
       type: string
     mysql_master_database_port: 3306
     mysql_slave1_database_port: 3307
     mysql_slave2_database_port: 3308
     mysql_database_password: "RhgDPXPEnAgxxXYZ"
-    mysql_image_tag: 
+    mysql_image_tag:
       value: "8.0"
       type: string
-    mysql_database_data_volume_path: 
+    mysql_database_data_volume_path:
       value: <- `${moncc-volume-path}`
       type: string
     mysql_database_data_volume_size: 60
