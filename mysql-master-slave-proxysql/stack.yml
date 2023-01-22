@@ -7,9 +7,8 @@ stack:
     - monk-mysql-proxysql/master
     - monk-mysql-proxysql/slave1
     - monk-mysql-proxysql/slave2
-    - monk-mysql-proxysql/lb
     - monk-mysql-proxysql/configure
-
+    - monk-mysql-proxysql/lb
   variables:
     mysql_database_repl_user:
       value: "repl"

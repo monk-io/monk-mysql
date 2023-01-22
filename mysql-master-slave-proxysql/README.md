@@ -127,5 +127,15 @@ The variables are in `stack.yml` file. You can quickly setup by editing the valu
 ## Stop, remove and clean up workloads and templates
 
 ```bash
-monk purge -x monk-mysql-master-slave-proxysql/stack
+monk purge -a monk-mysql-master-slave-proxysql/stack
 ```
+
+## Proxysql Limitations
+
+ProxySQL fully supports MySQL 8.0 , although there are some limitations prior to version 2.0.2:
+
+   Starting with MySQL 8.0.4, the default authentication plugin for MySQL server was changed from mysql_native_password to caching_sha2_password. ProxySQL doesn’t yet support caching_sha2_password.
+   For this reason, the MySQL server needs to be configured using mysql_native_password when using ProxySQL 2.0.2 or older. See the doc for further details.
+   
+Full article
+https://proxysql.com/documentation/mysql-8-0/
