@@ -3,7 +3,7 @@ namespace: monk-mysql
 
 db:
   metadata:
-    name: Jitsu
+    name: mysql
     description: |
       MySQL is a free, open-source relational database management system (RDBMS) that uses Structured Query Language (SQL) to manage and manipulate data. It is widely used by web developers and businesses to create and manage databases for various applications.
       Some of the key features of MySQL include:
