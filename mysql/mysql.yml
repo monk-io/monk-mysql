@@ -1,47 +1,54 @@
+---
 namespace: monk-mysql
 
 db:
+  metadata:
+    name: Jitsu
+    description: |
+      MySQL is a free, open-source relational database management system (RDBMS) that uses Structured Query Language (SQL) to manage and manipulate data. It is widely used by web developers and businesses to create and manage databases for various applications.
+      Some of the key features of MySQL include:
+      Scalability: MySQL can handle large amounts of data and supports multiple users and concurrent connections.
+      High performance: MySQL is optimized for speed and can handle a large number of queries at once.
+      Security: MySQL has built-in security features that can help protect against unauthorized access and ensure data privacy.
+      Flexibility: MySQL is highly customizable and can be used with a variety of programming languages and operating systems.
+      Availability: MySQL is widely used and has a large user community, which means that there is a wealth of resources and support available for developers.
+    website: https://www.mysql.com/
+    publisher: monk.io
+    icon: https://labs.mysql.com/common/logos/mysql-logo.svg?v2
   defines: runnable
-
   variables:
     image_tag:
       type: string
-      value: <- `${mysql_image_tag}`
+      value: latest
     mysql_port:
       type: int
-      value: <- `${mysql_database_port}`
+      value: 3306
     monk_mysql_database:
       env: MYSQL_DATABASE
       type: string
-      value: <- `${mysql_database_name}`
+      value: monk
     monk_mysql_password:
       env: MYSQL_PASSWORD
       type: string
-      value: <- `${mysql_database_password}`
+      value: RhgDPXPEnAgJ5q5g
     monk_mysql_user:
       env: MYSQL_USER
       type: string
-      value: <- `${mysql_database_user}`
+      value: monk
     monk_mysql_root_password:
       env: MYSQL_ROOT_PASSWORD
-      value: <- `${mysql_database_root_password}`
+      value: RhgDPXPEnAgJ5q5g
       type: string
-    volume_data:
-      type: string
-      value: <- `${mysql_database_data_volume_path}`
-
   containers:
     monk-mysql-db:
       paths:
-        - <- `${volume_data}/mysql:/var/lib/mysql`
+        - <- `${moncc-volume-path}/mysql:/var/lib/mysql`
       ports:
         - <- `0.0.0.0:${mysql_port}:3306`
       image-tag: <- `${image_tag}`
       image: docker.io/library/mysql
-
   services:
     monk-mysql-db:
       container: monk-mysql-db
       port: <- `${mysql_port}`
       protocol: tcp
-      host-port: <- `${mysql_port}`
