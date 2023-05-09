@@ -54,6 +54,8 @@ mysql-common:
 
 
 master: 
+  metadata:
+    private: true
   defines: runnable
   inherits: monk-mysql-proxysql/mysql-common
   variables:
@@ -89,6 +91,9 @@ master:
 
 
 slave1: 
+  metadata:
+    private: true
+
   defines: runnable
   inherits: monk-mysql-proxysql/mysql-common
   variables:
@@ -133,6 +138,8 @@ slave1:
         timeout: 60
 
 slave2: 
+  metadata:
+    private: true
   defines: runnable
   inherits: monk-mysql-proxysql/mysql-common
   variables:

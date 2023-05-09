@@ -55,6 +55,8 @@ mysql-common:
       protocol: tcp
 
 master:
+  metadata:
+    private: true
   defines: runnable
   inherits: monk-mysql-proxysql-monitor/mysql-common
 
@@ -91,6 +93,8 @@ master:
       mode: 644
 
 slave1:
+  metadata:
+    private: true
   defines: runnable
   inherits: monk-mysql-proxysql-monitor/mysql-common
 
@@ -132,6 +136,8 @@ slave1:
       mode: 644
 
 slave2:
+  metadata:
+    private: true
   defines: runnable
   inherits: monk-mysql-proxysql-monitor/mysql-common
 
@@ -173,6 +179,8 @@ slave2:
       mode: 644
 
 configure:
+  metadata:
+    private: true
   defines: runnable
   inherits: monk-mysql-proxysql-monitor/mysql-common
 
@@ -256,6 +264,8 @@ configure:
       timeout: 60
 
 lb:
+  metadata:
+    private: true
   defines: runnable
 
   connections:
@@ -402,6 +412,8 @@ lb:
       protocol: tcp
 
 promethues-mysql-master-exporter:
+  metadata:
+    private: true
   defines: runnable
 
   connections:
@@ -466,6 +478,8 @@ promethues-mysql-slave1-exporter:
       protocol: tcp
 
 promethues-mysql-slave2-exporter:
+  metadata:
+    private: true
   defines: runnable
 
   connections:
@@ -498,6 +512,8 @@ promethues-mysql-slave2-exporter:
       protocol: tcp
 
 promethues:
+  metadata:
+    private: true
   defines: runnable
 
   connections:
@@ -564,6 +580,8 @@ promethues:
       mode: 644
 
 grafana:
+  metadata:
+    private: true
   defines: runnable
   containers:
     mysql-grafana:

@@ -55,9 +55,11 @@ mysql-common:
       protocol: tcp
 
 master:
+  metadata:
+    private: true
   defines: runnable
   inherits: monk-mysql-master-slave/mysql-common
-
+  
   variables:
     mysql_port:
       type: int
@@ -91,6 +93,8 @@ master:
       mode: 644
 
 slave1:
+  metadata:
+    private: true
   defines: runnable
   inherits: monk-mysql-master-slave/mysql-common
 
@@ -132,6 +136,8 @@ slave1:
       mode: 644
 
 slave2:
+  metadata:
+    private: true
   defines: runnable
   inherits: monk-mysql-master-slave/mysql-common
 
@@ -173,6 +179,8 @@ slave2:
       mode: 644
 
 configure:
+  metadata:
+    private: true
   defines: runnable
   inherits: monk-mysql-master-slave/mysql-common
 
