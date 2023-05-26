@@ -15,6 +15,7 @@ db:
     website: https://www.mysql.com/
     publisher: monk.io
     icon: https://labs.mysql.com/common/logos/mysql-logo.svg?v2
+    tags: relational, rdms, transactional, sql
   defines: runnable
   variables:
     image_tag:
