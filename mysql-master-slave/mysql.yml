@@ -1,79 +1,80 @@
+---
 namespace: monk-mysql-master-slave
 
 mysql-common:
+  metadata:
+    name: mysql
+    description: |
+      MySQL is a free, open-source relational database management system (RDBMS) that uses Structured Query Language (SQL) to manage and manipulate data. It is widely used by web developers and businesses to create and manage databases for various applications.
+      Some of the key features of MySQL include:
+      Scalability: MySQL can handle large amounts of data and supports multiple users and concurrent connections.
+      High performance: MySQL is optimized for speed and can handle a large number of queries at once.
+      Security: MySQL has built-in security features that can help protect against unauthorized access and ensure data privacy.
+      Flexibility: MySQL is highly customizable and can be used with a variety of programming languages and operating systems.
+      Availability: MySQL is widely used and has a large user community, which means that there is a wealth of resources and support available for developers.
+    website: https://www.mysql.com/
+    publisher: monk.io
+    icon: https://labs.mysql.com/common/logos/mysql-logo.svg?v2
+    private: true
   connections:
     master:
       runnable: monk-mysql-master-slave/master
-      service: mysql-svc
+      service: mysql
     slave1:
       runnable: monk-mysql-master-slave/slave1
-      service: mysql-svc
+      service: mysql
     slave2:
       runnable: monk-mysql-master-slave/slave2
-      service: mysql-svc
-
+      service: mysql
   variables:
     image_tag:
       type: string
-      value: <- $mysql_image_tag
+      value: <- $mysql_image_tag default("8.0")
     database_name:
       type: string
       env: MYSQL_DATABASE
-      value: <- $mysql_database_name
+      value: <- $mysql_database_name default("monk")
     database_user:
       env: MYSQL_USER
       type: string
-      value: <- $mysql_database_user
+      value: <- $mysql_database_user default("db_user")
     database_password:
       env: MYSQL_PASSWORD
       type: string
-      value: <- $mysql_database_password
+      value: <- $mysql_database_password default("RhgDPXPEnAgxxXYZ")
     database_root_password:
       env: MYSQL_ROOT_PASSWORD
-      value: <- $mysql_database_root_password
+      value: <- $mysql_database_root_password default("RhgDPXPEnAgJ5q5g")
       type: string
     database_master_host:
       env: MYSQL_MASTER_HOST
       type: string
-      value: <- connection-hostname("master") split(".dns.podman") join("")
+      value: <- connection-hostname("master")
     database_slave1_host:
       env: MYSQL_SLAVE1_HOST
       type: string
-      value: <- connection-hostname("slave1") split(".dns.podman") join("")
+      value: <- connection-hostname("slave1")
     mysql-slave2-host:
       env: MYSQL_SLAVE2_HOST
       type: string
-      value: <- connection-hostname("slave2") split(".dns.podman") join("")
-    volume_data:
-      type: string
-      value: <- `${monk-volume-path}`
-
+      value: <- connection-hostname("slave2")
   services:
-    mysql-svc:
+    mysql:
       port: 3306
       container: mysql
       protocol: tcp
+  containers:
+    mysql:
+      image: mysql
+      image-tag: <- $image_tag default("8.0")
 
 master:
-  metadata:
-    private: true
   defines: runnable
   inherits: monk-mysql-master-slave/mysql-common
-  
-  variables:
-    mysql_port:
-      type: int
-      value: <- $mysql_master_database_port
-
   containers:
     mysql:
       paths:
-        - <- `${volume_data}/mysql-master:/var/lib/mysql`
-      ports:
-        - <- `${mysql_port}:3306`
-      image-tag: <- `${image_tag}`
-      image: mysql
-
+        - <- `${monk-volume-path}/mysql/master:/var/lib/mysql`
   files:
     my-file:
       raw: true
@@ -90,31 +91,15 @@ master:
         default-authentication-plugin=mysql_native_password
       container: mysql
       path: /etc/mysql/conf.d/master.cnf
-      mode: 644
+      mode: 0644
 
 slave1:
-  metadata:
-    private: true
   defines: runnable
   inherits: monk-mysql-master-slave/mysql-common
-
-  variables:
-    mysql_port:
-      type: int
-      value: <- $mysql_slave1_database_port
-    slave1-volume_data:
-        type: string
-        value: <- $mysql_database_data_volume_path
-
   containers:
     mysql:
-      ports:
-        - <- `0.0.0.0:${mysql_slave1_database_port}:3306`
-      image-tag: <- `${image_tag}`
       paths:
-        - <- `${slave1-volume_data}/mysql-slave1:/var/lib/mysql`
-      image: mysql
-
+        - <- `${monk-volume-path}/mysql/slave-1:/var/lib/mysql`
   files:
     my-file:
       raw: true
@@ -133,31 +118,15 @@ slave1:
         default-authentication-plugin=mysql_native_password
       container: mysql
       path: /etc/mysql/conf.d/slave1.cnf
-      mode: 644
+      mode: 0644
 
 slave2:
-  metadata:
-    private: true
   defines: runnable
   inherits: monk-mysql-master-slave/mysql-common
-
-  variables:
-    mysql_port:
-      type: int
-      value: <- $mysql_slave2_database_port
-    slave2-volume_data:
-        type: string
-        value: <- $mysql_database_data_volume_path
-
   containers:
     mysql:
-      ports:
-        - <- `0.0.0.0:${mysql_slave2_database_port}:3306`
-      image-tag: <- `${image_tag}`
       paths:
-        - <- `${slave2-volume_data}/mysql-slave2:/var/lib/mysql`
-      image: mysql
-
+        - <- `${monk-volume-path}/mysql/slave-2:/var/lib/mysql`
   files:
     my-file:
       raw: true
@@ -176,42 +145,37 @@ slave2:
         default-authentication-plugin=mysql_native_password
       container: mysql
       path: /etc/mysql/conf.d/slave2.cnf
-      mode: 644
+      mode: 0644
 
 configure:
-  metadata:
-    private: true
   defines: runnable
   inherits: monk-mysql-master-slave/mysql-common
-
   variables:
     mysql_master_password:
       env: MYSQL_MASTER_PASSWORD
       type: string
-      value: <- $mysql_database_root_password
+      value: <- $mysql_database_root_password default("RhgDPXPEnAgJ5q5g")
     mysql_repl_user:
       env: MYSQL_REPLICATION_USER
       type: string
-      value: <- $mysql_database_repl_user
+      value: <- $mysql_database_repl_user default("repl")
     mysql_repl_password:
       env: MYSQL_REPLICATION_PASSWORD
-      value: <- $mysql_database_repl_password
+      value: <- $mysql_database_repl_password default("RhgDPXPEnAgJ5q5g")
       type: string
     database_monitor_password:
       env: MYSQL_MONITOR_PASSWORD
-      value: <- $mysql_database_monitor_password
+      value: <- $mysql_database_monitor_password default("RhgDPXPEnAgJ5q5g")
       type: string
     database_monitor_user:
       env: MYSQL_MONITOR_USER
-      value: <- $mysql_database_monitor_user
+      value: <- $mysql_database_monitor_user default("monitor")
       type: string
-
   containers:
     mysql:
       bash: /tmp/init.sh
-      image-tag: <- `${image_tag}`
       image: mysql
-
+      image-tag: <- $image_tag default("8.0")
   files:
     my-file:
       raw: true
@@ -221,42 +185,32 @@ configure:
         while ! mysqladmin ping -u root -h $MYSQL_MASTER_HOST -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST --silent; do
           sleep 1
         done
-
         mysql -u root -h $MYSQL_MASTER_HOST -p$MYSQL_ROOT_PASSWORD  -e "RESET MASTER;"
         mysql -u root -h $MYSQL_MASTER_HOST -p$MYSQL_ROOT_PASSWORD  -e "FLUSH TABLES WITH READ LOCK;"
-
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "UNLOCK TABLES;"
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "ALTER USER 'root'@'%' IDENTIFIED WITH mysql_native_password BY '$MYSQL_ROOT_PASSWORD';"
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "CREATE USER '$MYSQL_MONITOR_USER'@'%' IDENTIFIED BY '$MYSQL_MONITOR_PASSWORD';"
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "FLUSH PRIVILEGES;"
-
         mysqldump -uroot -h $MYSQL_MASTER_HOST  -p$MYSQL_ROOT_PASSWORD --all-databases --source-data --single-transaction --flush-logs --events --result-file=/tmp/master_dump.sql
-
         mysql -h $MYSQL_SLAVE1_HOST -u root -p$MYSQL_ROOT_PASSWORD -e "STOP SLAVE;";
         mysql -h $MYSQL_SLAVE1_HOST -u root -p$MYSQL_ROOT_PASSWORD < /tmp/master_dump.sql
-
         mysql -h $MYSQL_SLAVE2_HOST -u root -p$MYSQL_ROOT_PASSWORD -e "STOP SLAVE;";
         mysql -h $MYSQL_SLAVE2_HOST -u root -p$MYSQL_ROOT_PASSWORD < /tmp/master_dump.sql
-
         log_file=`mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "SHOW MASTER STATUS\G" | grep File: | awk '{print $2}'`
         pos=`mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "SHOW MASTER STATUS\G" | grep Position: | awk '{print $2}'`
-
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE1_HOST -e "RESET SLAVE";
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE1_HOST -e "CHANGE MASTER TO MASTER_HOST='$MYSQL_MASTER_HOST', MASTER_USER='root', MASTER_PASSWORD='$MYSQL_ROOT_PASSWORD', MASTER_LOG_FILE='${log_file}', MASTER_LOG_POS=${pos};"
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE1_HOST -e "start slave"
-
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE2_HOST -e "RESET SLAVE";
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE2_HOST -e "CHANGE MASTER TO MASTER_HOST='$MYSQL_MASTER_HOST', MASTER_USER='root', MASTER_PASSWORD='$MYSQL_ROOT_PASSWORD', MASTER_LOG_FILE='${log_file}', MASTER_LOG_POS=${pos};"
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE2_HOST -e "start slave"
-
       container: mysql
       path: /tmp/init.sh
-      mode: 755
-
+      mode: 0755
   depends:
     wait-for:
-        runnables:
-            - monk-mysql-master-slave/master
-            - monk-mysql-master-slave/slave1
-            - monk-mysql-master-slave/slave2
-        timeout: 60
+      runnables:
+        - monk-mysql-master-slave/master
+        - monk-mysql-master-slave/slave1
+        - monk-mysql-master-slave/slave2
+      timeout: 60

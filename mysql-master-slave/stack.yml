@@ -1,44 +1,60 @@
+---
 namespace: monk-mysql-master-slave
 
 stack:
   defines: process-group
-
+  metadata:
+    name: mysql
+    description: |
+      MySQL is a free, open-source relational database management system (RDBMS) that uses Structured Query Language (SQL) to manage and manipulate data. It is widely used by web developers and businesses to create and manage databases for various applications.
+      Some of the key features of MySQL include:
+      Scalability: MySQL can handle large amounts of data and supports multiple users and concurrent connections.
+      High performance: MySQL is optimized for speed and can handle a large number of queries at once.
+      Security: MySQL has built-in security features that can help protect against unauthorized access and ensure data privacy.
+      Flexibility: MySQL is highly customizable and can be used with a variety of programming languages and operating systems.
+      Availability: MySQL is widely used and has a large user community, which means that there is a wealth of resources and support available for developers.
+    website: https://www.mysql.com/
+    publisher: monk.io
+    icon: https://labs.mysql.com/common/logos/mysql-logo.svg?v2
   runnable-list:
     - monk-mysql-master-slave/master
     - monk-mysql-master-slave/slave1
     - monk-mysql-master-slave/slave2
     - monk-mysql-master-slave/configure
-
   variables:
     mysql_database_repl_user:
-      value: "repl"
       type: string
+      value: repl
     mysql_database_repl_password:
-      value: "RhgDPXPEnAgJ5q5g"
       type: string
+      value: RhgDPXPEnAgJ5q5g
     mysql_database_monitor_user:
-      value: "monitor"
       type: string
+      value: monitor
     mysql_database_monitor_password:
-      value: "RhgDPXPEnAgJ5q5g"
       type: string
+      value: RhgDPXPEnAgJ5q5g
     mysql_database_user:
-      value: "db_user"
       type: string
+      value: db_user
     mysql_database_root_password:
-      value: "RhgDPXPEnAgJ5q5g"
       type: string
+      value: RhgDPXPEnAgJ5q5g
     mysql_database_name:
-      value: "monk"
       type: string
-    mysql_master_database_port: 3306
-    mysql_slave1_database_port: 3307
-    mysql_slave2_database_port: 3308
-    mysql_database_password: "RhgDPXPEnAgxxXYZ"
+      value: monk
+    mysql_master_database_port:
+      type: int
+      value: 3306
+    mysql_slave1_database_port:
+      type: int
+      value: 3307
+    mysql_slave2_database_port:
+      type: int
+      value: 3308
+    mysql_database_password:
+      type: string
+      value: RhgDPXPEnAgxxXYZ
     mysql_image_tag:
+      type: string
       value: "8.0"
-      type: string
-    mysql_database_data_volume_path:
-      value: <- `${moncc-volume-path}/mysql`
-      type: string
-    mysql_database_data_volume_size: 60
