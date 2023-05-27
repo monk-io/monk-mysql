@@ -2,6 +2,7 @@
 namespace: monk-mysql
 
 db:
+  defines: runnable
   metadata:
     name: mysql
     description: |
@@ -15,7 +16,6 @@ db:
     website: https://www.mysql.com/
     publisher: monk.io
     icon: https://labs.mysql.com/common/logos/mysql-logo.svg?v2
-  defines: runnable
   variables:
     image_tag:
       type: string
@@ -38,10 +38,10 @@ db:
       type: string
   containers:
     monk-mysql-db:
-      paths:
-        - <- `${moncc-volume-path}/mysql:/var/lib/mysql`
-      image-tag: <- `${image_tag}`
       image: docker.io/library/mysql
+      image-tag: <- $image_tag
+      paths:
+        - <- `${monk-volume-path}/mysql:/var/lib/mysql`
   services:
     monk-mysql-db:
       container: monk-mysql-db
