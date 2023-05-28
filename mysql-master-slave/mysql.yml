@@ -54,7 +54,7 @@ mysql-common:
       env: MYSQL_SLAVE1_HOST
       type: string
       value: <- connection-hostname("slave1")
-    mysql-slave2-host:
+    database_slave2_host:
       env: MYSQL_SLAVE2_HOST
       type: string
       value: <- connection-hostname("slave2")
