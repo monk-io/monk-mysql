@@ -1,2 +1,2 @@
-REPO mysql
+REPO mysql-master-slave-proxysql
 LOAD mysql.yml stack.yml
