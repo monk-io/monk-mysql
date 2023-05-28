@@ -104,25 +104,25 @@ foo@bar:~$ monk run monk-mysql-master-slave-proxysql/stack                      
 
 The variables are in `stack.yml` file. You can quickly setup by editing the values here.
 
-| Variable                          | Description                                |
-|------------------------------     |------------------------------------------- |
-| mysql_database_user               | Database username that wordpress will use  |
-| mysql_database_root_password      | Database authorized user password          |
-| mysql_database_password           | Database password that wordpress will use  |
-| server_name                       | The domain name you want to run            |
-| mysql_image_tag                   | The mysql version you want to use          |
-| mysql_database_name               | Database name that wordpress will use      |
-| mysql_database_data_volume_path   | Mysql Data directory                       |
-| mysql_database_data_volume_size   | Mysql Data Storage Size                    |
-| mysql_database_repl_user          | Mysql Replication user                     |
-| mysql_database_repl_password      | Mysql Replication password                 |
-| mysql_database_monitor_user       | Mysql Monitor user                         |
-| mysql_database_repl_password      | Mysql Monitor password                     |
-| mysql_master_database_port        | Mysql Master Port                          |
-| mysql_slave1_database_port        | Mysql Slave1 Port                          |
-| mysql_slave2_database_port        | Mysql Slave2 Port                          |
-| proxysql_admin_username           | Proxysql Admin username                    |
-| proxysql_admin_password           | Proxysql Admin password                    |
+| Variable                        | Description                               |
+| ------------------------------- | ----------------------------------------- |
+| mysql_database_user             | Database username that wordpress will use |
+| mysql_database_root_password    | Database authorized user password         |
+| mysql_database_password         | Database password that wordpress will use |
+| server_name                     | The domain name you want to run           |
+| mysql_image_tag                 | The mysql version you want to use         |
+| mysql_database_name             | Database name that wordpress will use     |
+| mysql_database_data_volume_path | Mysql Data directory                      |
+| mysql_database_data_volume_size | Mysql Data Storage Size                   |
+| mysql_database_repl_user        | Mysql Replication user                    |
+| mysql_database_repl_password    | Mysql Replication password                |
+| mysql_database_monitor_user     | Mysql Monitor user                        |
+| mysql_database_repl_password    | Mysql Monitor password                    |
+| mysql_master_database_port      | Mysql Master Port                         |
+| mysql_slave1_database_port      | Mysql Slave1 Port                         |
+| mysql_slave2_database_port      | Mysql Slave2 Port                         |
+| proxysql_admin_username         | Proxysql Admin username                   |
+| proxysql_admin_password         | Proxysql Admin password                   |
 
 ## Stop, remove and clean up workloads and templates
 
@@ -134,8 +134,8 @@ monk purge -a monk-mysql-master-slave-proxysql/stack
 
 ProxySQL fully supports MySQL 8.0 , although there are some limitations prior to version 2.0.2:
 
-   Starting with MySQL 8.0.4, the default authentication plugin for MySQL server was changed from mysql_native_password to caching_sha2_password. ProxySQL doesn’t yet support caching_sha2_password.
-   For this reason, the MySQL server needs to be configured using mysql_native_password when using ProxySQL 2.0.2 or older. See the doc for further details.
-   
+Starting with MySQL 8.0.4, the default authentication plugin for MySQL server was changed from mysql_native_password to caching_sha2_password. ProxySQL doesn’t yet support caching_sha2_password.
+For this reason, the MySQL server needs to be configured using mysql_native_password when using ProxySQL 2.0.2 or older. See the doc for further details.
+
 Full article
-https://proxysql.com/documentation/mysql-8-0/
+[https://proxysql.com/documentation/mysql-8-0/](https://proxysql.com/documentation/mysql-8-0/)
