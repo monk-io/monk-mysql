@@ -1,3 +1,4 @@
+---
 namespace: monk-mysql-proxysql-monitor
 
 mysql-common:
@@ -11,7 +12,6 @@ mysql-common:
     slave2:
       runnable: monk-mysql-proxysql-monitor/slave2
       service: mysql-svc
-
   variables:
     image_tag:
       type: string
@@ -47,7 +47,6 @@ mysql-common:
     volume_data:
       type: string
       value: <- `${monk-volume-path}`
-
   services:
     mysql-svc:
       port: 3306
@@ -59,12 +58,10 @@ master:
     private: true
   defines: runnable
   inherits: monk-mysql-proxysql-monitor/mysql-common
-
   variables:
     mysql_port:
       type: int
       value: <- $mysql_master_database_port
-
   containers:
     mysql:
       paths:
@@ -73,7 +70,6 @@ master:
         - <- `${mysql_port}:3306`
       image-tag: <- `${image_tag}`
       image: mysql
-
   files:
     my-file:
       raw: true
@@ -97,15 +93,13 @@ slave1:
     private: true
   defines: runnable
   inherits: monk-mysql-proxysql-monitor/mysql-common
-
   variables:
     mysql_port:
       type: int
       value: <- $mysql_slave1_database_port
     slave1-volume_data:
-        type: string
-        value: <- $volume_data
-
+      type: string
+      value: <- $volume_data
   containers:
     mysql:
       ports:
@@ -114,7 +108,6 @@ slave1:
       paths:
         - <- `${slave1-volume_data}/mysql-slave1:/var/lib/mysql`
       image: mysql
-
   files:
     my-file:
       raw: true
@@ -140,15 +133,13 @@ slave2:
     private: true
   defines: runnable
   inherits: monk-mysql-proxysql-monitor/mysql-common
-
   variables:
     mysql_port:
       type: int
       value: <- $mysql_slave2_database_port
     slave2-volume_data:
-        type: string
-        value: <- $volume_data
-
+      type: string
+      value: <- $volume_data
   containers:
     mysql:
       ports:
@@ -157,7 +148,6 @@ slave2:
       paths:
         - <- `${slave2-volume_data}/mysql-slave2:/var/lib/mysql`
       image: mysql
-
   files:
     my-file:
       raw: true
@@ -183,7 +173,6 @@ configure:
     private: true
   defines: runnable
   inherits: monk-mysql-proxysql-monitor/mysql-common
-
   variables:
     mysql_master_password:
       env: MYSQL_MASTER_PASSWORD
@@ -205,13 +194,11 @@ configure:
       env: MYSQL_MONITOR_USER
       value: <- $mysql_database_monitor_user
       type: string
-
   containers:
     mysql:
       bash: /tmp/init.sh
       image-tag: <- `${image_tag}`
       image: mysql
-
   files:
     my-file:
       raw: true
@@ -221,40 +208,30 @@ configure:
         while ! mysqladmin ping -u root -h $MYSQL_MASTER_HOST -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST --silent; do
           sleep 1
         done
-
         mysql -u root -h $MYSQL_MASTER_HOST -p$MYSQL_ROOT_PASSWORD  -e "RESET MASTER;"
         mysql -u root -h $MYSQL_MASTER_HOST -p$MYSQL_ROOT_PASSWORD  -e "FLUSH TABLES WITH READ LOCK;"
-
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "UNLOCK TABLES;"
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "ALTER USER 'root'@'%' IDENTIFIED WITH mysql_native_password BY '$MYSQL_ROOT_PASSWORD';"
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "CREATE USER '$MYSQL_MONITOR_USER'@'%' IDENTIFIED BY '$MYSQL_MONITOR_PASSWORD';"
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "FLUSH PRIVILEGES;"
-
         mysqldump -uroot -h $MYSQL_MASTER_HOST  -p$MYSQL_ROOT_PASSWORD --all-databases --source-data --single-transaction --flush-logs --events --result-file=/tmp/master_dump.sql
-
         mysql -h $MYSQL_SLAVE1_HOST -u root -p$MYSQL_ROOT_PASSWORD -e "STOP SLAVE;";
         mysql -h $MYSQL_SLAVE1_HOST -u root -p$MYSQL_ROOT_PASSWORD < /tmp/master_dump.sql
         mysql -h $MYSQL_SLAVE1_HOST -u root -p$MYSQL_ROOT_PASSWORD -e "FLUSH PRIVILEGES;";
-
         mysql -h $MYSQL_SLAVE2_HOST -u root -p$MYSQL_ROOT_PASSWORD -e "STOP SLAVE;";
         mysql -h $MYSQL_SLAVE2_HOST -u root -p$MYSQL_ROOT_PASSWORD < /tmp/master_dump.sql
         mysql -h $MYSQL_SLAVE2_HOST -u root -p$MYSQL_ROOT_PASSWORD -e "FLUSH PRIVILEGES;";
-
         log_file=`mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "SHOW MASTER STATUS\G" | grep File: | awk '{print $2}'`
         pos=`mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_MASTER_HOST -e "SHOW MASTER STATUS\G" | grep Position: | awk '{print $2}'`
-
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE1_HOST -e "RESET SLAVE";
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE1_HOST -e "CHANGE MASTER TO MASTER_HOST='$MYSQL_MASTER_HOST', MASTER_USER='root', MASTER_PASSWORD='$MYSQL_ROOT_PASSWORD', MASTER_LOG_FILE='${log_file}', MASTER_LOG_POS=${pos};"
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE1_HOST -e "start slave"
-
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE2_HOST -e "RESET SLAVE";
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE2_HOST -e "CHANGE MASTER TO MASTER_HOST='$MYSQL_MASTER_HOST', MASTER_USER='root', MASTER_PASSWORD='$MYSQL_ROOT_PASSWORD', MASTER_LOG_FILE='${log_file}', MASTER_LOG_POS=${pos};"
         mysql -u root -p$MYSQL_ROOT_PASSWORD -h $MYSQL_SLAVE2_HOST -e "start slave"
-
       container: mysql
       path: /tmp/init.sh
       mode: 755
-
   depends:
     wait-for:
       runnables:
@@ -267,7 +244,6 @@ lb:
   metadata:
     private: true
   defines: runnable
-
   connections:
     master:
       runnable: monk-mysql-proxysql-monitor/master
@@ -278,7 +254,6 @@ lb:
     slave2:
       runnable: monk-mysql-proxysql-monitor/slave2
       service: mysql-svc
-
   variables:
     mysql-master-host:
       env: MYSQL_MASTER_HOST
@@ -307,7 +282,6 @@ lb:
     proxysql_data:
       type: string
       value: proxysql-data
-
   containers:
     monk-proxysql:
       ports:
@@ -315,7 +289,6 @@ lb:
         - <- `6033:6033`
         - <- `6080:6080`
       image: severalnines/proxysql
-
   files:
     my-file:
       contents: |
@@ -330,7 +303,6 @@ lb:
           web_enabled=true
           web_port=6080
         }
-
         mysql_variables=
         {
           threads=4
@@ -355,7 +327,6 @@ lb:
           monitor_password="{{ v "monitor_user_password" }}"
           set_query_lock_on_hostgroup=0
         }
-
         mysql_replication_hostgroups =
         (
           {
@@ -364,19 +335,16 @@ lb:
             comment="host groups"
           }
         )
-
         mysql_servers =
         (
           { address="{{ v "mysql-master-host"}}", port=3306, hostgroup=0, max_connections=1000, max_replication_lag = 5 },
           { address="{{ v "mysql-slave1-host"}}", port=3306, hostgroup=1, max_connections=1000, max_replication_lag = 5 },
           { address="{{ v "mysql-slave2-host"}}", port=3306, hostgroup=1, max_connections=1000, max_replication_lag = 5 }
         )
-
         mysql_users =
         (
           { username = "root", password = "{{ v "mpassword" }}",   default_hostgroup = 0, max_connections=1000, active = 1 }
         )
-
         mysql_query_rules =
         (
           {
@@ -404,7 +372,6 @@ lb:
       container: monk-proxysql
       path: /etc/proxysql.cnf
       mode: 644
-
   services:
     mysql-lb-svc:
       port: 3305
@@ -415,12 +382,10 @@ promethues-mysql-master-exporter:
   metadata:
     private: true
   defines: runnable
-
   connections:
     master:
       runnable: monk-mysql-proxysql-monitor/master
       service: mysql-svc
-
   variables:
     database_name:
       type: string
@@ -434,11 +399,9 @@ promethues-mysql-master-exporter:
       type: string
       env: DATA_SOURCE_NAME
       value: <- `root:${mysql_database_root_password}@(${mysql-master-host}:3306)/${mysql_database_name}`
-
   containers:
     mysql-master-prom-exporter:
       image: prom/mysqld-exporter
-
   services:
     mysql-master-exporter-svc:
       port: 9104
@@ -447,12 +410,10 @@ promethues-mysql-master-exporter:
 
 promethues-mysql-slave1-exporter:
   defines: runnable
-
   connections:
     slave1:
       runnable: monk-mysql-proxysql-monitor/slave1
       service: mysql-svc
-
   variables:
     database_name:
       type: string
@@ -461,16 +422,14 @@ promethues-mysql-slave1-exporter:
     mysql-slave-host:
       env: MYSQL_SLAVE_HOST
       type: string
-      value:  <- connection-hostname("slave1") split(".dns.podman") join("")
+      value: <- connection-hostname("slave1") split(".dns.podman") join("")
     mysql_master_data_source:
       type: string
       env: DATA_SOURCE_NAME
       value: <- `root:${mysql_database_root_password}@(${mysql-slave-host}:3306)/${mysql_database_name}`
-
   containers:
     mysql-slave-prom-exporter:
       image: prom/mysqld-exporter
-
   services:
     mysql-slave-exporter-svc:
       port: 9104
@@ -481,12 +440,10 @@ promethues-mysql-slave2-exporter:
   metadata:
     private: true
   defines: runnable
-
   connections:
     slave2:
       runnable: monk-mysql-proxysql-monitor/slave2
       service: mysql-svc
-
   variables:
     database_name:
       type: string
@@ -500,11 +457,9 @@ promethues-mysql-slave2-exporter:
       type: string
       env: DATA_SOURCE_NAME
       value: <- `root:${mysql_database_root_password}@(${mysql-slave-host}:3306)/${mysql_database_name}`
-
   containers:
     mysql-slave-prom-exporter:
       image: prom/mysqld-exporter
-
   services:
     mysql-slave-exporter-svc:
       port: 9104
@@ -515,18 +470,16 @@ promethues:
   metadata:
     private: true
   defines: runnable
-
   connections:
     master:
       runnable: monk-mysql-proxysql-monitor/promethues-mysql-master-exporter
       service: mysql-master-exporter-svc
     slave1:
       runnable: monk-mysql-proxysql-monitor/promethues-mysql-slave1-exporter
-      service:  mysql-slave-exporter-svc
+      service: mysql-slave-exporter-svc
     slave2:
       runnable: monk-mysql-proxysql-monitor/promethues-mysql-slave2-exporter
       service: mysql-slave-exporter-svc
-
   variables:
     mysql-exporter-master:
       type: string
@@ -537,24 +490,21 @@ promethues:
     mysql-exporter-slave2:
       type: string
       value: <- connection-hostname("slave2") split(".dns.podman") join("")
-
   containers:
     mysql-promethues:
       image: prom/prometheus
       ports:
         - 9090:9090
-
   services:
     promethues-svc:
       port: 9090
       container: mysql-promethues
       protocol: tcp
-
   files:
     my-file:
       contents: |
         global:
-          scrape_interval: 15s # By default, scrape targets every 15 seconds.
+          scrape_interval: 15s  # By default, scrape targets every 15 seconds.
 
           # Attach these labels to any time series or alerts when communicating with
           # external systems (federation, remote storage, Alertmanager).
