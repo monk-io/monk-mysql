@@ -188,7 +188,6 @@ configure:
       image: mysql
       image-tag: <- $image_tag default("8.0")
   files:
-    defines: files
     my-file:
       raw: true
       contents: |
