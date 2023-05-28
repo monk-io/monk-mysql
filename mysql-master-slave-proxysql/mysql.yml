@@ -219,13 +219,13 @@ configure:
       container: mysql
       path: /tmp/init.sh
       mode: 0755
-  depends:
-    wait-for:
-      runnables:
-        - monk-mysql-proxysql/master
-        - monk-mysql-proxysql/slave1
-        - monk-mysql-proxysql/slave2
-      timeout: 60
+  # depends:
+  #   wait-for:
+  #     runnables:
+  #       - monk-mysql-proxysql/master
+  #       - monk-mysql-proxysql/slave1
+  #       - monk-mysql-proxysql/slave2
+  #     timeout: 60
 
 lb:
   defines: runnable
@@ -366,11 +366,11 @@ lb:
       container: monk-proxysql
       protocol: tcp
       # host-port: 6080
-  depends:
-    wait-for:
-      runnables:
-        - monk-mysql-proxysql/master
-        - monk-mysql-proxysql/slave1
-        - monk-mysql-proxysql/slave2
-        - monk-mysql-proxysql/configure
-      timeout: 60
+  # depends:
+  #   wait-for:
+  #     runnables:
+  #       - monk-mysql-proxysql/master
+  #       - monk-mysql-proxysql/slave1
+  #       - monk-mysql-proxysql/slave2
+  #       - monk-mysql-proxysql/configure
+  #     timeout: 60

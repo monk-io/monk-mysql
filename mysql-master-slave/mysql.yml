@@ -71,6 +71,9 @@ mysql-common:
 master:
   defines: runnable
   inherits: monk-mysql-master-slave/mysql-common
+  metadata:
+    name: mysql-master
+    private: true
   containers:
     mysql:
       paths:
@@ -96,6 +99,8 @@ master:
 slave1:
   defines: runnable
   inherits: monk-mysql-master-slave/mysql-common
+  metadata:
+    name: mysql-slave-1
   containers:
     mysql:
       paths:
@@ -123,6 +128,8 @@ slave1:
 slave2:
   defines: runnable
   inherits: monk-mysql-master-slave/mysql-common
+  metadata:
+    name: mysql-slave-2
   containers:
     mysql:
       paths:
@@ -150,6 +157,8 @@ slave2:
 configure:
   defines: runnable
   inherits: monk-mysql-master-slave/mysql-common
+  metadata:
+    name: mysql-configure
   variables:
     mysql_master_password:
       env: MYSQL_MASTER_PASSWORD
@@ -207,10 +216,10 @@ configure:
       container: mysql
       path: /tmp/init.sh
       mode: 0755
-  depends:
-    wait-for:
-      runnables:
-        - monk-mysql-master-slave/master
-        - monk-mysql-master-slave/slave1
-        - monk-mysql-master-slave/slave2
-      timeout: 60
+  # depends:
+  #   wait-for:
+  #     runnables:
+  #       - monk-mysql-master-slave/master
+  #       - monk-mysql-master-slave/slave1
+  #       - monk-mysql-master-slave/slave2
+  #     timeout: 60
